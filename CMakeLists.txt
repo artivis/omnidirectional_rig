@@ -4,11 +4,20 @@ project(omni_localization)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED)
+find_package(catkin REQUIRED COMPONENTS
+    roscpp
+    std_msgs
+    cv_bridge
+    image_transport
+    vocabulary_tree
+    libsiftfast
+)
+
+find_package( OpenCV REQUIRED )
+find_package(Eigen)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -89,6 +98,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 # include_directories(include)
+include_directories(${catkin_INCLUDE_DIRS} include)
 
 ## Declare a cpp library
 # add_library(omni_localization
@@ -96,16 +106,24 @@ catkin_package(
 # )
 
 ## Declare a cpp executable
-# add_executable(omni_localization_node src/omni_localization_node.cpp)
+add_executable(omni_localization_node
+                           src/image_handler.cpp
+                           src/omni_localization_node.cpp
+                           src/omni_camera.cpp
+                           src/feature_extractor.cpp
+                           src/fisheye.cpp
+)
+
+target_link_libraries(omni_localization_node
+   ${catkin_LIBRARIES}
+)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(omni_localization_node omni_localization_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(omni_localization_node
-#   ${catkin_LIBRARIES}
-# )
+
 
 #############
 ## Install ##

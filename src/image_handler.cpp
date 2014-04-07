@@ -1,6 +1,6 @@
 #include <ros/ros.h>
 
-#include "pal_visual_localization/image_handler.h"
+#include "image_handler.h"
 
 namespace pal {
     namespace slam {

@@ -23,17 +23,24 @@ class OmniCamera {
 
         OmniCamera();
         OmniCamera(const std::vector<std::string> &topicsName, const std::vector<std::string> &paramPath);
+        OmniCamera(const std::vector<std::string> &topicsName, const std::vector<std::string> &cameraParamPath, const std::string &extrinPath);
 
-        void initCamera(int cameraNum, const std::string &topicName, const std::string &paramPath);
+        void InitCamera(int cameraNum, const std::string &topicName, const std::string &paramPath);
 
-        void loadCalibration(const std::string&);
+        bool LoadCalibration(const std::string&);
 
-//    private :
+        void DispParam();
+
+        bool IsInit();
 
         FishEye *camera_1;
         FishEye *camera_2;
 
+    private :
+
         cv::Mat baseline;
+
+        bool _init;
 
 };
 

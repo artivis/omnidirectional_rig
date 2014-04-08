@@ -27,7 +27,7 @@ namespace pal {
             void saveImage(std::string name, IplImage* image);
             void readImage(std::string file, cv::Mat& img);
 
-        private:
+        protected:
 
             ros::NodeHandle _nh;
             ros::CallbackQueue _cbqueue;

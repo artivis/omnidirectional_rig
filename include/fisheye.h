@@ -6,11 +6,14 @@
 #include <iostream>
 #include <fstream>
 
-#include <opencv2/core/core.hpp>
-#include <ros/ros.h>
-#include "yaml-cpp/yaml.h"
 
-#include <image_handler.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <ros/ros.h>
+#include <yaml-cpp/yaml.h>
+
+#include "image_handler.h"
+//#include "usefull.h"
 
 struct imageSize{
 
@@ -45,37 +48,56 @@ public:
 
     ~FishEye();
 
-    std::string Get_type();
-    double Get_xi();
-    cv::Mat Get_intrinsic();
+    std::string GetType();
+    double GetXi();
+    cv::Mat GetIntrinsic();
 //    imageSize Get_imageSize();
-    std::vector<int> Get_imageSize();
+    std::vector<int> GetImageSize();
+    cv::Mat GetLUT();
+    cv::Mat GetMask();
+    cv::Mat getImage();
 
-    bool isInit();
+    bool IsInit();
 
-    void Set_type(const std::string&);
-    void Set_xi(double);
-    void Set_intrinsic(const cv::Mat&);
-    void Set_imageSize(const imageSize&);
-    void Set_imageSize(int rows, int cols);
+    void SetType(const std::string&);
+    void SetXi(double);
+    void SetIntrinsic(const cv::Mat&);
+    void SetImageSize(const imageSize&);
+    void SetImageSize(int rows, int cols);
 
     void DispParam();
 
+    void LoadMask(const std::string&);
+
     bool LoadLUT(const std::string&,const std::string&);
+//    void CompLUT(const std::string&);
+
+    void readImage(std::string file);
+
+
 
 private :
 
-    bool _loadParam(const std::string &paramPath);
 
     CameraParam _cameraParam;
 
     bool _init;
 
     cv::Mat _LUTsphere;
-
     cv::Mat _LUT_wrap_im;
+
+    cv::Mat _Mask;
+    cv::Mat _Frame;
+
+    bool _loadParam(const std::string &paramPath);
+
+//    void _compSphericalCoor();
+
 };
 
+
+template <class NumType>
+cv::Mat Vector2Mat(std::vector< NumType > vect);
 
 
 #endif // FISHEYE_H

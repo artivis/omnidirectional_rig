@@ -112,6 +112,7 @@ add_executable(omni_localization_node
                            src/omni_camera.cpp
                            src/feature_extractor.cpp
                            src/fisheye.cpp
+                           src/usefull.cpp
 )
 
 target_link_libraries(omni_localization_node

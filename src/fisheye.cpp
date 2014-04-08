@@ -1,5 +1,6 @@
 #include "fisheye.h"
 
+
 FishEye::FishEye(const std::string &topicsName, const std::string &paramPath)
     : ImageHandler(topicsName)
 {
@@ -50,15 +51,15 @@ bool FishEye::_loadParam(const std::string &paramPath)
     return true;
 }
 
-std::string FishEye::Get_type(){
+std::string FishEye::GetType(){
     return this->_cameraParam.cameraType;
 }
 
-double FishEye::Get_xi(){
+double FishEye::GetXi(){
     return this->_cameraParam.xi;
 }
 
-cv::Mat FishEye::Get_intrinsic(){
+cv::Mat FishEye::GetIntrinsic(){
     return this->_cameraParam.intrinParam;
 }
 
@@ -66,7 +67,7 @@ cv::Mat FishEye::Get_intrinsic(){
 //    return this->_cameraParam.imSize;
 //}
 
-std::vector<int> FishEye::Get_imageSize(){
+std::vector<int> FishEye::GetImageSize(){
 
     std::vector<int> tmp;
 
@@ -76,27 +77,39 @@ std::vector<int> FishEye::Get_imageSize(){
     return tmp;
 }
 
-bool FishEye::isInit(){
+cv::Mat FishEye::GetLUT(){
+    return this->_LUTsphere;
+}
+
+cv::Mat FishEye::GetMask(){
+    return this->_Mask;
+}
+
+cv::Mat FishEye::getImage(){
+    return this->_Frame;
+}
+
+bool FishEye::IsInit(){
     return this->_init;
 }
 
-void FishEye::Set_type(const std::string& type){
+void FishEye::SetType(const std::string& type){
     this->_cameraParam.cameraType = type;
 }
 
-void FishEye::Set_xi(double xi){
+void FishEye::SetXi(double xi){
     this->_cameraParam.xi = xi;
 }
 
-void FishEye::Set_intrinsic(const cv::Mat &intrin){
+void FishEye::SetIntrinsic(const cv::Mat &intrin){
     this->_cameraParam.intrinParam = intrin;
 }
 
-void FishEye::Set_imageSize(const imageSize &imSize){
+void FishEye::SetImageSize(const imageSize &imSize){
     this->_cameraParam.imSize = imSize;
 }
 
-void FishEye::Set_imageSize(int rows, int cols){
+void FishEye::SetImageSize(int rows, int cols){
     this->_cameraParam.imSize.rows = rows;
     this->_cameraParam.imSize.cols = cols;
 }
@@ -117,10 +130,13 @@ void FishEye::DispParam()
 }
 
 bool FishEye::LoadLUT(const std::string& filename, const std::string &LUT)
-{std::cout<<"here0";
-    cv::FileStorage fs(filename,cv::FileStorage::READ);std::cout<<"here0";
+{
 
-    if (!fs.isOpened())
+    std::ifstream fs;
+
+    fs.open ((char*)filename.c_str());
+
+    if ( !fs.is_open() )
     {
         std::cout<<"Failed to open "<<filename<< std::endl;
         return false;
@@ -130,18 +146,30 @@ bool FishEye::LoadLUT(const std::string& filename, const std::string &LUT)
     std::string LUTheal = "Healpix";
     std::string LUTplatte = "PlatteCarree";
 
+    std::vector<float> tmp_vec;
+    std::string num;
+
     if (LUT.compare(LUTsphere) == 0)
     {
-std::cout<<"here0";
-        fs["LUT_sph_pts"] >> this->_LUTsphere;
+
+        while(std::getline(fs,num,','))
+        {
+
+            tmp_vec.push_back(atof(num.c_str()));
+
+        }
+
+        this->_LUTsphere = Vector2Mat(tmp_vec);
+
+        this->_LUTsphere = this->_LUTsphere.reshape(1,3);
 
     }else if(LUT.compare(LUTheal)  == 0 ){
 
-        fs["LUT_Healpix_pts"] >> this->_LUT_wrap_im; std::cout<<"here1";
+//        fs["LUT_Healpix_pts"] >> this->_LUT_wrap_im;
 
     }else if(LUT.compare(LUTplatte)  == 0 ){
 
-        fs["LUT_PlCa_pts"] >> this->_LUT_wrap_im; std::cout<<"here2";
+//        fs["LUT_PlCa_pts"] >> this->_LUT_wrap_im;
 
     }else{
 
@@ -153,13 +181,100 @@ std::cout<<"here0";
         return false;
     }
 
-    fs.release();
+//    fs.release();
+
+    fs.close();
 
     return true;
-
 }
 
 
 
+void FishEye::LoadMask(const std::string& maskFile){
+
+    this->_Mask = cv::imread(maskFile,CV_LOAD_IMAGE_GRAYSCALE);
+
+    cv::threshold(this->_Mask,this->_Mask,240,1,cv::THRESH_BINARY);
+}
+
+void FishEye::readImage(std::string file){
+
+    ImageHandler::readImage(file,this->_Frame);
+
+}
 
 
+//template <class NumType>
+//cv::Mat Vector2Mat(std::vector< NumType > vect){
+
+//    cv::Mat matrix = cv::Mat::zeros(1,vect.size(), cv::DataType<NumType>::type);
+
+//    for (int r=0; r<vect.size(); r++)
+//    {
+//         matrix.at<NumType>(0,r) = vect[r];
+//    }
+
+//    return matrix;
+//}
+
+//void FishEye::CompLUT(const std::string&){
+
+//    if (!this->_init)
+//    {
+//        std::cout<<"Please Load camera parameter prior to compute LUT"<<std::endl;
+//        return;
+//    }
+
+//    if (LUT.compare(LUTsphere) == 0)
+//    {
+//        std::cout<<"here0";
+//        fs["LUT_sph_pts"] >> this->_LUTsphere;
+
+//    }else if(LUT.compare(LUTheal)  == 0 ){
+
+//        fs["LUT_Healpix_pts"] >> this->_LUT_wrap_im; std::cout<<"here1";
+
+//    }else if(LUT.compare(LUTplatte)  == 0 ){
+
+//        fs["LUT_PlCa_pts"] >> this->_LUT_wrap_im; std::cout<<"here2";
+
+//    }else{
+
+//        std::cout<<"Error while loading LUT, please choose a correct option :\n"<<
+//                   "1 : Sphere for points lying on the S2 sphere\n"<<
+//                   "2 : Healpix for the Healpix unwrapped points\n"<<
+//                   "3 : PlCa for Platte Carree unwrapped points"<<std::endl;
+
+//        return false;
+//    }
+
+//}
+
+
+//void FishEye::compSphericalCoor(){
+
+
+
+
+//}
+
+
+
+
+
+
+
+
+
+template <class NumType>
+cv::Mat Vector2Mat(std::vector< NumType > vect){
+
+    cv::Mat matrix = cv::Mat::zeros(1,vect.size(), cv::DataType<NumType>::type);
+
+    for (int r=0; r<vect.size(); r++)
+    {
+         matrix.at<NumType>(0,r) = vect[r];
+    }
+
+    return matrix;
+}

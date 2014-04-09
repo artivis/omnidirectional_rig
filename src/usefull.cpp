@@ -5,19 +5,16 @@
 void Cart2Sph(const cv::Mat& cart_coor, cv::Mat& sph_coor, int rad_flag )
 {
 
-    if (!cart_coor.rows==3 || !cart_coor.cols==3)
+    if (!cart_coor.rows==3)
     {
         return;
     }
 
-    int rows = cart_coor.rows;
-    int cols = cart_coor.cols;
-
-    int loop = std::max(rows,cols);
+    int loop = std::max(cart_coor.rows,cart_coor.cols);
 
     double x,y,z;
 
-    sph_coor = cv::Mat::zeros(rows,cols,cart_coor.type());
+    sph_coor = cv::Mat::zeros(cart_coor.rows,cart_coor.cols,cart_coor.type());
 
     if(rad_flag == 1){
         for (int i=0;i<loop;i++)

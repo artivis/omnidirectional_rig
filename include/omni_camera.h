@@ -3,6 +3,9 @@
 
 #include <fisheye.h>
 
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/photo/photo.hpp"
+
 class OmniCamera {
 
     ros::NodeHandle nh_param;
@@ -32,17 +35,21 @@ class OmniCamera {
 
         void LoadLUT(const std::vector<std::string> &, const std::vector<std::string> &);
 
-        void MergeLUT();
+        void MergeLUT(cv::Size size = cv::Size(1200,400));
 
         void RescaleWrapLUT(cv::Size size = cv::Size(1200,400));
 
-        void StitchImage(const cv::Mat &mask/* = cv::noArray()*/);
+        void StitchImage(int INPAIN_FLAG = 0);
 
 
 
         bool IsInit();
 
         cv::Mat GetExtrin();
+
+        cv::Mat GetPano();
+
+        cv::Mat GetLUT();
 
         void SetExtrin(const cv::Mat &);
 

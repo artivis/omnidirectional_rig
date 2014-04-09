@@ -154,7 +154,6 @@ void FishEye::ReleaseLut(){
 
 void FishEye::DispParam()
 {
-
     std::cout << "camera type : " << this->_cameraParam.cameraType << std::endl;
 
     std::cout << "camera xi   : " << this->_cameraParam.xi << std::endl;
@@ -163,7 +162,6 @@ void FishEye::DispParam()
 
     std::cout << "image size :\n   rows : " << this->_cameraParam.imSize.rows
               << "\n   cols : " << this->_cameraParam.imSize.cols << std::endl<< std::endl;
-
 }
 
 bool FishEye::LoadLUT(const std::string& filename, const std::string &LUT)
@@ -236,9 +234,9 @@ bool FishEye::LoadLUT(const std::string& filename, const std::string &LUT)
     }else{
 
         std::cout<<"Error while loading LUT, please choose a correct option :\n"<<
-                   "1 : 'Sphere' for points lying on the S2 sphere\n"<<
-                   "2 : 'Healpix' for the Healpix unwrapped points\n"<<
-                   "3 : 'PlCa' for Platte Carree unwrapped points"<<std::endl;
+                   "1 : "<<LUTsphere<<" for points lying on the S2 sphere\n"<<
+                   "2 : "<<LUTheal<<" for the Healpix unwrapped points\n"<<
+                   "3 : "<<LUTplatte<<" for Platte Carree unwrapped points"<<std::endl<<std::endl;
 
         return false;
     }

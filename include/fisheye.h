@@ -13,7 +13,7 @@
 #include <yaml-cpp/yaml.h>
 
 #include "image_handler.h"
-//#include "usefull.h"
+#include "usefull.h"
 
 struct imageSize{
 
@@ -48,12 +48,15 @@ public:
 
     ~FishEye();
 
+//    friend class OmniCamera;
+
     std::string GetType();
     double GetXi();
     cv::Mat GetIntrinsic();
 //    imageSize Get_imageSize();
     std::vector<int> GetImageSize();
     cv::Mat GetLUT();
+    cv::Mat GetLUT(const std::string &);
     cv::Mat GetMask();
     cv::Mat getImage();
 
@@ -64,6 +67,8 @@ public:
     void SetIntrinsic(const cv::Mat&);
     void SetImageSize(const imageSize&);
     void SetImageSize(int rows, int cols);
+
+    void ReleaseLut();
 
     void DispParam();
 
@@ -76,7 +81,7 @@ public:
 
 
 
-private :
+//private :
 
 
     CameraParam _cameraParam;
@@ -95,9 +100,6 @@ private :
 
 };
 
-
-template <class NumType>
-cv::Mat Vector2Mat(std::vector< NumType > vect);
 
 
 #endif // FISHEYE_H

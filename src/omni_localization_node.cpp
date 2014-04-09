@@ -22,8 +22,8 @@ int main(int argc, char** argv){
     std::string LUTcam1;
     std::string LUTcam2;
 
-    path_yamls_cam.push_back("etc/intrinsicParam_cam1.yaml");
-    path_yamls_cam.push_back("etc/intrinsicParam_cam1.yaml");
+    path_yamls_cam.push_back("etc/calib/intrinsicParam_cam1.yaml");
+    path_yamls_cam.push_back("etc/calib/intrinsicParam_cam1.yaml");
 
     maskCamera_1  = "etc/images/cam1/Img_mask1.jpg";
     maskCamera_2  = "etc/images/cam2/Img_mask2.jpg";
@@ -31,11 +31,10 @@ int main(int argc, char** argv){
     topics_name.push_back("/whatever");
     topics_name.push_back("/whatever");
 
-    extrinParam = "etc/extrinsicParam.yaml";
+    extrinParam = "etc/calib/extrinsicParam.yaml";
 
-    LUTcam1 = "etc/LUT_txt_cam1.txt";
-//    LUTcam1 = "etc/qqa.txt";
-    LUTcam2 = "etc/LUT_short_cam2.txt";
+    LUTcam1 = "etc/calib/LUT_sph_cam1.txt";
+    LUTcam2 = "etc/calib/LUT_sph_cam2.txt";
 
     OmniCamera omniSys(topics_name,path_yamls_cam,extrinParam);
 
@@ -47,11 +46,12 @@ int main(int argc, char** argv){
     omniSys.camera_1->LoadMask(maskCamera_1);
     omniSys.camera_2->LoadMask(maskCamera_2);
 
-    omniSys.camera_1->LoadLUT(LUTcam1,"Sphere");
+    omniSys.camera_1->LoadLUT(LUTcam1,"PlCa");
 
-    std::cout<<omniSys.camera_1->GetLUT().size();
+    std::cout<<"rows : "<<omniSys.camera_1->GetLUT("PlCa").rows<<std::endl;
+    std::cout<<"cols : "<<omniSys.camera_1->GetLUT("PlCa").cols<<std::endl;
 
-    std::cout<<omniSys.camera_1->GetLUT();
+//    std::cout<<omniSys.camera_1->GetLUT();
 
     cv::namedWindow("imshow_cam1",cv::WINDOW_NORMAL);
     cv::imshow("imshow_cam1",omniSys.camera_1->getImage());

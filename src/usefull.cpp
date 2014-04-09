@@ -2,15 +2,45 @@
 
 
 
-template <class NumType>
-cv::Mat Vector2Mat(std::vector< NumType > vect){
+void Cart2Sph(const cv::Mat& cart_coor, cv::Mat& sph_coor, int rad_flag )
+{
 
-    cv::Mat matrix = cv::Mat::zeros(1,vect.size(), cv::DataType<NumType>::type);
-
-    for (int r=0; r<vect.size(); r++)
+    if (!cart_coor.rows==3 || !cart_coor.cols==3)
     {
-         matrix.at<NumType>(0,r) = vect[r];
+        return;
     }
 
-    return matrix;
+    int rows = cart_coor.rows;
+    int cols = cart_coor.cols;
+
+    int loop = std::max(rows,cols);
+
+    double x,y,z;
+
+    sph_coor = cv::Mat::zeros(rows,cols,cart_coor.type());
+
+    if(rad_flag == 1){
+        for (int i=0;i<loop;i++)
+        {
+            x = cart_coor.at<double>(0,i);
+            y = cart_coor.at<double>(1,i);
+            z = cart_coor.at<double>(2,i);
+
+            sph_coor.at<double>(0,i) = atan2(y,x); //azimmuth
+
+            sph_coor.at<double>(0,i) = atan2(z,sqrt( x*x + y*y )); //elevation
+
+            sph_coor.at<double>(0,i) = sqrt( x*x + y*y + z*z ); //radius
+        }
+    }else{
+        for (int i=0;i<loop;i++)
+        {
+            x = cart_coor.at<double>(0,i);
+            y = cart_coor.at<double>(1,i);
+
+            sph_coor.at<double>(0,i) = atan2(y,x); //azimmuth
+
+            sph_coor.at<double>(0,i) = atan2(z,sqrt( x*x + y*y )); //elevation
+        }
+    }
 }

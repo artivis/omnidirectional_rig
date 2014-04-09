@@ -1,19 +1,7 @@
 #ifndef OMNI_CAMERA_H
 #define OMNI_CAMERA_H
 
-//#include <vector>
-//#include <string>
-//#include <opencv2/core/core.hpp>
-
-//#include <ros/ros.h>
-
-//#include <image_handler.h>
-
 #include <fisheye.h>
-
-//using namespace cv;
-//using namespace std;
-
 
 class OmniCamera {
 
@@ -21,26 +9,57 @@ class OmniCamera {
 
     public :
 
+        FishEye *camera_1;
+        FishEye *camera_2;
+
         OmniCamera();
         OmniCamera(const std::vector<std::string> &topicsName, const std::vector<std::string> &paramPath);
-        OmniCamera(const std::vector<std::string> &topicsName, const std::vector<std::string> &cameraParamPath, const std::string &extrinPath);
 
-        void InitCamera(int cameraNum, const std::string &topicName, const std::string &paramPath);
+        OmniCamera(const std::vector<std::string> &topicsName, const std::vector<std::string> &cameraParamPath,
+                   const std::string &extrinPath);
+
+//        OmniCamera(const std::vector<std::string> &topicsName, const std::vector<std::string> &cameraParamPath,
+//                   const std::string &extrinPath, const std::vector<std::string> &LUTpath,
+//                   const std::vector<std::string> &LUTtype = std::vector<std::string>);
+
+        ~OmniCamera();
+
+        //void InitCamera(int cameraNum, const std::string &topicName, const std::string &paramPath);
 
         bool LoadCalibration(const std::string&);
 
         void DispParam();
 
+        void LoadLUT(const std::vector<std::string> &, const std::vector<std::string> &);
+
+        void MergeLUT();
+
+        void RescaleWrapLUT(cv::Size size = cv::Size(1200,400));
+
+        void StitchImage(const cv::Mat &mask/* = cv::noArray()*/);
+
+
+
         bool IsInit();
 
-        FishEye *camera_1;
-        FishEye *camera_2;
+        cv::Mat GetExtrin();
+
+        void SetExtrin(const cv::Mat &);
+
+
 
     private :
 
-        cv::Mat baseline;
+        cv::Mat _extrin;
 
         bool _init;
+
+        cv::Size _panoSize;
+
+        cv::Mat _pano;
+
+        cv::Mat _LUTsphere;
+        cv::Mat _LUT_wrap_im;
 
 };
 

@@ -81,6 +81,39 @@ cv::Mat FishEye::GetLUT(){
     return this->_LUTsphere;
 }
 
+cv::Mat FishEye::GetLUT(const std::string &LUT ){
+
+    std::string LUTsphere =  "Sphere";
+    std::string LUTheal = "Healpix";
+    std::string LUTplatte = "PlCa";
+
+    if (LUT.compare(LUTsphere) == 0 && !this->_LUTsphere.empty())
+    {
+
+        return this->_LUTsphere;
+
+
+    }else if(LUT.compare(LUTheal) == 0 && !this->_LUT_wrap_im.empty()){
+
+        return this->_LUT_wrap_im;
+
+    }else if(LUT.compare(LUTplatte) == 0 && !this->_LUT_wrap_im.empty()){
+
+        return this->_LUT_wrap_im;
+
+    }else{
+
+        std::cout<<"Wrong LUT choice, please choose a correct option :\n"<<
+                   "1 : 'Sphere' for points lying on the S2 sphere\n"<<
+                   "2 : 'Healpix' for the Healpix unwrapped points\n"<<
+                   "3 : 'PlCa' for Platte Carree unwrapped points"<<std::endl;
+
+        return cv::Mat::zeros(1,1,CV_32F);
+    }
+
+
+}
+
 cv::Mat FishEye::GetMask(){
     return this->_Mask;
 }
@@ -114,6 +147,10 @@ void FishEye::SetImageSize(int rows, int cols){
     this->_cameraParam.imSize.cols = cols;
 }
 
+void FishEye::ReleaseLut(){
+    if (!this->_LUT_wrap_im.empty()) this->_LUT_wrap_im.release();
+    if (!this->_LUTsphere.empty()) this->_LUTsphere.release();
+}
 
 void FishEye::DispParam()
 {
@@ -144,7 +181,7 @@ bool FishEye::LoadLUT(const std::string& filename, const std::string &LUT)
 
     std::string LUTsphere =  "Sphere";
     std::string LUTheal = "Healpix";
-    std::string LUTplatte = "PlatteCarree";
+    std::string LUTplatte = "PlCa";
 
     std::vector<float> tmp_vec;
     std::string num;
@@ -159,24 +196,49 @@ bool FishEye::LoadLUT(const std::string& filename, const std::string &LUT)
 
         }
 
-        this->_LUTsphere = Vector2Mat(tmp_vec);
+        this->_LUTsphere = Vector2Mat<float>(tmp_vec);
 
-        this->_LUTsphere = this->_LUTsphere.reshape(1,3);
+        this->_LUTsphere = this->_LUTsphere.reshape(0,tmp_vec.size()/3);
+
+        this->_LUTsphere = this->_LUTsphere.t();
+
 
     }else if(LUT.compare(LUTheal)  == 0 ){
 
-//        fs["LUT_Healpix_pts"] >> this->_LUT_wrap_im;
+        while(std::getline(fs,num,','))
+        {
+
+            tmp_vec.push_back(atof(num.c_str()));
+
+        }
+
+        this->_LUT_wrap_im = Vector2Mat<float>(tmp_vec);
+
+        this->_LUT_wrap_im = this->_LUT_wrap_im.reshape(0,tmp_vec.size()/2);
+
+        this->_LUT_wrap_im = this->_LUT_wrap_im.t();
 
     }else if(LUT.compare(LUTplatte)  == 0 ){
 
-//        fs["LUT_PlCa_pts"] >> this->_LUT_wrap_im;
+        while(std::getline(fs,num,','))
+        {
+
+            tmp_vec.push_back(atof(num.c_str()));
+
+        }
+
+        this->_LUT_wrap_im = Vector2Mat<float>(tmp_vec);
+
+        this->_LUT_wrap_im = this->_LUT_wrap_im.reshape(0,tmp_vec.size()/2);
+
+        this->_LUT_wrap_im = this->_LUT_wrap_im.t();
 
     }else{
 
         std::cout<<"Error while loading LUT, please choose a correct option :\n"<<
-                   "1 : Sphere for points lying on the S2 sphere\n"<<
-                   "2 : Healpix for the Healpix unwrapped points\n"<<
-                   "3 : PlCa for Platte Carree unwrapped points"<<std::endl;
+                   "1 : 'Sphere' for points lying on the S2 sphere\n"<<
+                   "2 : 'Healpix' for the Healpix unwrapped points\n"<<
+                   "3 : 'PlCa' for Platte Carree unwrapped points"<<std::endl;
 
         return false;
     }
@@ -203,19 +265,6 @@ void FishEye::readImage(std::string file){
 
 }
 
-
-//template <class NumType>
-//cv::Mat Vector2Mat(std::vector< NumType > vect){
-
-//    cv::Mat matrix = cv::Mat::zeros(1,vect.size(), cv::DataType<NumType>::type);
-
-//    for (int r=0; r<vect.size(); r++)
-//    {
-//         matrix.at<NumType>(0,r) = vect[r];
-//    }
-
-//    return matrix;
-//}
 
 //void FishEye::CompLUT(const std::string&){
 
@@ -262,19 +311,3 @@ void FishEye::readImage(std::string file){
 
 
 
-
-
-
-
-template <class NumType>
-cv::Mat Vector2Mat(std::vector< NumType > vect){
-
-    cv::Mat matrix = cv::Mat::zeros(1,vect.size(), cv::DataType<NumType>::type);
-
-    for (int r=0; r<vect.size(); r++)
-    {
-         matrix.at<NumType>(0,r) = vect[r];
-    }
-
-    return matrix;
-}

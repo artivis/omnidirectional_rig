@@ -8,10 +8,9 @@ OmniCamera::OmniCamera(const std::vector<std::string> &topicsName, const std::ve
 
     this->camera_2 = new FishEye(topicsName.at(1),cameraParamPath.at(1));
 
-    this->_init = false;
-
     _panoSize = cv::Size(1200,400);
 
+    this->_init = false;
 }
 
 OmniCamera::OmniCamera(const std::vector<std::string> &topicsName, const std::vector<std::string> &cameraParamPath, const std::string &extrinPath)
@@ -22,6 +21,8 @@ OmniCamera::OmniCamera(const std::vector<std::string> &topicsName, const std::ve
     this->camera_2 = new FishEye(topicsName.at(1),cameraParamPath.at(1));
 
     this->LoadCalibration(extrinPath);
+
+    _panoSize = cv::Size(1200,400);
 
     this->_init = true;
 
@@ -149,7 +150,7 @@ void OmniCamera::MergeLUT(cv::Size size)
     this->camera_1->ReleaseLut();
     this->camera_2->ReleaseLut();
 
-    this->_LUT_wrap_im = cv::Mat::zeros(tmp.rows,tmp.cols,CV_8SC1);
+    this->_LUT_wrap_im = cv::Mat::zeros(tmp.rows,tmp.cols,CV_16UC1);
 
     double min,max;
 
@@ -157,13 +158,15 @@ void OmniCamera::MergeLUT(cv::Size size)
 
     std::cout<<"minmax tmp row 0 : "<<min<<" "<<max<<std::endl;
 
-    tmp.row(0).convertTo(this->_LUT_wrap_im.row(0), CV_8SC1,size.height/(max-min),-size.height/min);
+    tmp.row(0).convertTo(this->_LUT_wrap_im.row(0), CV_16UC1
+                         ,(double)(size.width/(max-min)),(double)(- (min * (size.width/(max-min)))));
 
     cv::minMaxLoc(tmp.row(1),&min,&max);
 
     std::cout<<"minmax tmp row 1 : "<<min<<" "<<max<<std::endl;
 
-    tmp.row(1).convertTo(this->_LUT_wrap_im.row(1),CV_8SC1,size.width/(max-min),-size.width/min);
+    tmp.row(1).convertTo(this->_LUT_wrap_im.row(1),CV_16UC1,
+                         size.height/(max-min),- (min * (size.height/(max-min))));
 
     cv::minMaxLoc(this->_LUT_wrap_im.row(0),&min,&max);
 
@@ -208,43 +211,48 @@ void OmniCamera::StitchImage(int INPAIN_FLAG)
         return;
     }
 
-    double pix_cam1 = this->camera_1->GetImageSize().at(0) * this->camera_1->GetImageSize().at(1);
-
-    this->RescaleWrapLUT();
-
-    std::cout<< " within stitch : after rescale "<<std::endl;
-
-    this->_pano = cv::Mat::zeros(this->_panoSize, CV_32FC3);
+    this->_pano = cv::Mat::zeros(this->_panoSize, this->camera_1->_Frame.type());
 
     cv::Mat mask_inpaint = cv::Mat::zeros(this->_panoSize, CV_8U);
 
-    cv::MatIterator_<cv::Vec3d> it_cam;
+    cv::MatIterator_<cv::Vec3b> it_cam;
+    cv::MatIterator_<cv::Vec3b> it_end;
 
     cv::MatIterator_<double> it_mask;
 
-    it_cam = this->camera_1->_Frame.begin<cv::Vec3d>();
+    cv::Mat tmp_im = this->camera_1->_Frame.t();
+
+//    it_cam = this->camera_1->_Frame.begin<cv::Vec3b>();
+    it_cam = tmp_im.begin<cv::Vec3b>();
+
+    it_end = this->camera_1->_Frame.end<cv::Vec3b>();
 
     it_mask = this->camera_1->_Mask.begin<double>();
 
-    for (int i = 0; i < this->_LUT_wrap_im.cols;i++)
+    for (int i = 0; i < this->_LUT_wrap_im.cols; i++)
     {
-        if(*it_mask == 1)
+        if(*it_mask > 0)
         {
-            this->_pano.at<cv::Vec3d>(this->_LUT_wrap_im.at<double>(1,i),this->_LUT_wrap_im.at<double>(0,i))[0] = (*it_cam)[0];
+            this->_pano.at<cv::Vec3b>(this->_LUT_wrap_im.at<unsigned short>(1,i),this->_LUT_wrap_im.at<unsigned short>(0,i))[0] = (*it_cam)[0];
 
-            this->_pano.at<cv::Vec3d>(this->_LUT_wrap_im.at<double>(1,i),this->_LUT_wrap_im.at<double>(0,i))[1] = (*it_cam)[1];
+            this->_pano.at<cv::Vec3b>(this->_LUT_wrap_im.at<unsigned short>(1,i),this->_LUT_wrap_im.at<unsigned short>(0,i))[1] = (*it_cam)[1];
 
-            this->_pano.at<cv::Vec3d>(this->_LUT_wrap_im.at<double>(1,i),this->_LUT_wrap_im.at<double>(0,i))[2] = (*it_cam)[2];
+            this->_pano.at<cv::Vec3b>(this->_LUT_wrap_im.at<unsigned short>(1,i),this->_LUT_wrap_im.at<unsigned short>(0,i))[2] = (*it_cam)[2];
+
         }else if(INPAIN_FLAG){
-            mask_inpaint.at<double>(this->_LUT_wrap_im.at<double>(1,i),this->_LUT_wrap_im.at<double>(0,i)) = 1;
+
+            mask_inpaint.at<int>(this->_LUT_wrap_im.at<unsigned short>(1,i),this->_LUT_wrap_im.at<unsigned short>(0,i)) = 1;
         }
 
         it_cam++;
         it_mask++;
 
-        if (i == pix_cam1)
+        if (it_cam == it_end)
         {
-            it_cam = this->camera_2->_Frame.begin<cv::Vec3d>();
+            tmp_im = this->camera_2->_Frame.t();
+            it_cam = tmp_im.begin<cv::Vec3b>();
+//            it_cam = this->camera_2->_Frame.begin<cv::Vec3b>();
+            it_end = this->camera_2->_Frame.end<cv::Vec3b>();
             it_mask = this->camera_2->_Mask.begin<double>();
         }
     }

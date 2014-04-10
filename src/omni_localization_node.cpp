@@ -57,7 +57,7 @@ int main(int argc, char** argv){
     omniSys.LoadLUT(LUTs_file,LUTs_type);
 
     cv::namedWindow("imshow_cam1",cv::WINDOW_NORMAL);
-    cv::imshow("imshow_cam1",omniSys.camera_1->getImage());
+//    cv::imshow("imshow_cam1",omniSys.camera_1->getImage());
 
 //    cv::namedWindow("imshow_cam2",cv::WINDOW_NORMAL);
 //    cv::imshow("imshow_cam2",omniSys.camera_2->getImage());
@@ -71,12 +71,9 @@ int main(int argc, char** argv){
 
     omniSys.MergeLUT();
 
-    std::cout<<"rows : "<<omniSys.GetLUT().rows<<std::endl;
-    std::cout<<"cols : "<<omniSys.GetLUT().cols<<std::endl;
+    omniSys.StitchImage(0);
 
-    omniSys.StitchImage(1);
-
-//    cv::imshow("imshow_cam1",omniSys.GetPano());
+    cv::imshow("imshow_cam1",omniSys.GetPano());
 
     cv::waitKey(0);
 

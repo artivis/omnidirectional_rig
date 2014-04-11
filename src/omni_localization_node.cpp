@@ -38,7 +38,7 @@ int main(int argc, char** argv){
 
     extrinParam = "etc/calib/extrinsicParam.yaml";
 
-    LUTs_file.push_back("etc/calib/LUT_sph_cam1.txt");
+    LUTs_file.push_back("etc/calib/ptsMillersI.txt");
     LUTs_file.push_back("etc/calib/LUT_sph_cam2.txt");
 
     LUTs_type.push_back("PlCa");

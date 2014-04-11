@@ -254,7 +254,7 @@ void FishEye::LoadMask(const std::string& maskFile){
 
     this->_Mask = cv::imread(maskFile,CV_LOAD_IMAGE_GRAYSCALE);
 
-    cv::threshold(this->_Mask,this->_Mask,240,1,cv::THRESH_BINARY);
+    cv::threshold(this->_Mask,this->_Mask,240,1,cv::THRESH_BINARY || cv::THRESH_OTSU);
 }
 
 void FishEye::readImage(std::string file){

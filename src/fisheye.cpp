@@ -241,8 +241,6 @@ bool FishEye::LoadLUT(const std::string& filename, const std::string &LUT)
         return false;
     }
 
-//    fs.release();
-
     fs.close();
 
     return true;
@@ -252,9 +250,13 @@ bool FishEye::LoadLUT(const std::string& filename, const std::string &LUT)
 
 void FishEye::LoadMask(const std::string& maskFile){
 
-    this->_Mask = cv::imread(maskFile,CV_LOAD_IMAGE_GRAYSCALE);
+    cv::Mat tmp;
 
-    cv::threshold(this->_Mask,this->_Mask,240,1,cv::THRESH_BINARY || cv::THRESH_OTSU);
+    tmp = cv::imread(maskFile,CV_LOAD_IMAGE_GRAYSCALE);
+
+    cv::threshold(tmp,tmp,240,1,cv::THRESH_BINARY);
+
+    tmp.convertTo(this->_Mask,0);
 }
 
 void FishEye::readImage(std::string file){
@@ -264,48 +266,36 @@ void FishEye::readImage(std::string file){
 }
 
 
-//void FishEye::CompLUT(const std::string&){
+void FishEye::ProjSph(){
 
-//    if (!this->_init)
-//    {
-//        std::cout<<"Please Load camera parameter prior to compute LUT"<<std::endl;
-//        return;
-//    }
+    if (!this->IsInit()) return;
 
-//    if (LUT.compare(LUTsphere) == 0)
-//    {
-//        std::cout<<"here0";
-//        fs["LUT_sph_pts"] >> this->_LUTsphere;
+    this->_LUTsphere = cv::Mat::zeros(3,this->_Frame.rows * this->_Frame.cols,CV_32FC1);
 
-//    }else if(LUT.compare(LUTheal)  == 0 ){
+    cv::Vec3f pts;
 
-//        fs["LUT_Healpix_pts"] >> this->_LUT_wrap_im; std::cout<<"here1";
+    int i = 0;
 
-//    }else if(LUT.compare(LUTplatte)  == 0 ){
+    pts[2] = 1;
 
-//        fs["LUT_PlCa_pts"] >> this->_LUT_wrap_im; std::cout<<"here2";
+    for (int row = 0; row < this->_Frame.rows; row++)
+    {
+        for (int col = 0; col < this->_Frame.cols; col++)
+        {
 
-//    }else{
+            pts[0] = col;
+            pts[1] = row;
 
-//        std::cout<<"Error while loading LUT, please choose a correct option :\n"<<
-//                   "1 : Sphere for points lying on the S2 sphere\n"<<
-//                   "2 : Healpix for the Healpix unwrapped points\n"<<
-//                   "3 : PlCa for Platte Carree unwrapped points"<<std::endl;
+            cv::gemm(this->_cameraParam.intrinParam.inv(),pts,1,NULL,NULL,pts);
 
-//        return false;
-//    }
+            this->_LUTsphere.at<float>(0,i) = 0;
 
-//}
-
-
-//void FishEye::compSphericalCoor(){
+            this->_LUTsphere.at<float>(1,i) = 0;
+        }
+    }
 
 
 
-
-//}
-
-
-
+}
 
 

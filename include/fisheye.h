@@ -79,7 +79,7 @@ public:
 
     void readImage(std::string file);
 
-
+    void ProjSph();
 
 //private :
 

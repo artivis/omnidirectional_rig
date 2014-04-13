@@ -53,7 +53,6 @@ public:
     std::string GetType();
     double GetXi();
     cv::Mat GetIntrinsic();
-//    imageSize Get_imageSize();
     std::vector<int> GetImageSize();
     cv::Mat GetLUT();
     cv::Mat GetLUT(const std::string &);
@@ -79,7 +78,12 @@ public:
 
     void readImage(std::string file);
 
-    void ProjSph();
+    void Im2Sph(const cv::Size& im = cv::Size(1280,1024));
+    void Im2Sph(int rows = 1024,int cols = 1280);
+    cv::Vec3f Pix2Sph(int ind_row, int ind_col);
+
+
+
 
 //private :
 
@@ -96,7 +100,6 @@ public:
 
     bool _loadParam(const std::string &paramPath);
 
-//    void _compSphericalCoor();
 
 };
 

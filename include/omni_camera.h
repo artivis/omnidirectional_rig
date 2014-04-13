@@ -41,7 +41,9 @@ class OmniCamera {
 
         void StitchImage(int INPAIN_FLAG = 0);
 
+        void SaveImage(const std::string &filename = "panoramicImage.jpg");
 
+        void ApplyBaseline();
 
         bool IsInit();
 

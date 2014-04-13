@@ -28,7 +28,6 @@ FishEye::~FishEye(){
 
 bool FishEye::_loadParam(const std::string &paramPath)
 {
-
     cv::FileStorage fs(paramPath,cv::FileStorage::READ);
 
     if (!fs.isOpened())
@@ -62,10 +61,6 @@ double FishEye::GetXi(){
 cv::Mat FishEye::GetIntrinsic(){
     return this->_cameraParam.intrinParam;
 }
-
-//imageSize FishEye::Get_imageSize(){
-//    return this->_cameraParam.imSize;
-//}
 
 std::vector<int> FishEye::GetImageSize(){
 
@@ -265,37 +260,72 @@ void FishEye::readImage(std::string file){
 
 }
 
-
-void FishEye::ProjSph(){
+void FishEye::Im2Sph(int rows,int cols){
 
     if (!this->IsInit()) return;
 
-    this->_LUTsphere = cv::Mat::zeros(3,this->_Frame.rows * this->_Frame.cols,CV_32FC1);
+    this->_LUTsphere = cv::Mat::zeros(3,rows * cols,CV_32FC1);
 
-    cv::Vec3f pts;
+    cv::Mat pts = cv::Mat::ones(3,1,CV_32FC1);
+
+    float alpha;
 
     int i = 0;
 
-    pts[2] = 1;
-
-    for (int row = 0; row < this->_Frame.rows; row++)
+    for (int row = 0; row < rows; row++)
     {
-        for (int col = 0; col < this->_Frame.cols; col++)
+        for (int col = 0; col < cols; col++)
         {
+            pts.at<float>(0) = col;
+            pts.at<float>(1) = row;
 
-            pts[0] = col;
-            pts[1] = row;
+            pts = this->_cameraParam.intrinParam.inv() * pts;
 
-            cv::gemm(this->_cameraParam.intrinParam.inv(),pts,1,NULL,NULL,pts);
+            alpha = (this->_cameraParam.xi * pts.at<float>(3) + sqrt(pts.at<float>(3)*pts.at<float>(3) + (1-this->_cameraParam.xi*this->_cameraParam.xi)*
+                        (pts.at<float>(0)*pts.at<float>(0) + pts.at<float>(1)*pts.at<float>(1)))) / cv::norm(pts);
 
-            this->_LUTsphere.at<float>(0,i) = 0;
+            this->_LUTsphere.at<float>(0,i) = pts.at<float>(0) * alpha;
+            this->_LUTsphere.at<float>(1,i) = pts.at<float>(1) * alpha;
+            this->_LUTsphere.at<float>(2,i) = pts.at<float>(2) * alpha;
 
-            this->_LUTsphere.at<float>(1,i) = 0;
+            i++;
         }
     }
+}
 
+void FishEye::Im2Sph(const cv::Size& im){
 
+    this->Im2Sph(im.height,im.width);
 
 }
+
+
+
+cv::Vec3f FishEye::Pix2Sph(int ind_row, int ind_col)
+{
+    cv::Vec3f pts;
+
+    cv::Mat _pts = cv::Mat::ones(3,1,CV_32FC1);
+
+    _pts.at<float>(0) = ind_col;
+    _pts.at<float>(1) = ind_row;
+
+    float alpha;
+
+    _pts = this->_cameraParam.intrinParam.inv() * _pts;
+
+    alpha = (this->_cameraParam.xi * _pts.at<float>(3) + sqrt(_pts.at<float>(3)*_pts.at<float>(3) + (1-this->_cameraParam.xi*this->_cameraParam.xi)*
+                (_pts.at<float>(0)*_pts.at<float>(0) + _pts.at<float>(1)*_pts.at<float>(1)))) / cv::norm(_pts);
+
+    pts[0] = _pts.at<float>(0) * alpha;
+    pts[1] = _pts.at<float>(1) * alpha;
+    pts[2] = _pts.at<float>(2) * alpha - this->_cameraParam.xi;
+
+    return pts;
+}
+
+
+
+
 
 

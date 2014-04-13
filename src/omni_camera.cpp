@@ -8,7 +8,7 @@ OmniCamera::OmniCamera(const std::vector<std::string> &topicsName, const std::ve
 
     this->camera_2 = new FishEye(topicsName.at(1),cameraParamPath.at(1));
 
-    _panoSize = cv::Size(1200,400);
+    this->_panoSize = cv::Size(1200,400);
 
     this->_init = false;
 }
@@ -22,7 +22,7 @@ OmniCamera::OmniCamera(const std::vector<std::string> &topicsName, const std::ve
 
     this->LoadCalibration(extrinPath);
 
-    _panoSize = cv::Size(1200,400);
+    this->_panoSize = cv::Size(1200,400);
 
     this->_init = true;
 
@@ -201,22 +201,33 @@ void OmniCamera::StitchImage(int INPAIN_FLAG)
 
     cv::Mat im_mask = this->camera_1->_Mask;
 
-    const cv::Vec3b *ptr_pix = im_val.ptr<cv::Vec3b>(row_ind) + col_ind;
+    const cv::Vec3b *ptr_pix;
+    ptr_pix = im_val.ptr<cv::Vec3b>(row_ind) + col_ind;
 
-    const uchar *ptr_mask = im_mask.ptr<uchar>(row_ind) + col_ind;
+//    cv::Vec3b *ptr_pano;
+
+    const uchar *ptr_mask;
+    ptr_mask = im_mask.ptr<uchar>(row_ind) + col_ind;
 
     for (int i = 0; i < this->_LUT_wrap_im.cols; i++)
     {
         if(*ptr_mask > 0)
         {
 
-            this->_pano.at<cv::Vec3b>(this->_LUT_wrap_im.at<unsigned short>(1,i),this->_LUT_wrap_im.at<unsigned short>(0,i)) = *ptr_pix;
+//            ptr_pano = &this->_pano.at<cv::Vec3b>(this->_LUT_wrap_im.at<unsigned short>(1,i),this->_LUT_wrap_im.at<unsigned short>(0,i));
+
+//            if (cv::sum(*ptr_pano)[0] > 0)
+//            {
+//                *ptr_pano = (*ptr_pano + *ptr_pix)/2;
+
+//            }else{
+
+                this->_pano.at<cv::Vec3b>(this->_LUT_wrap_im.at<unsigned short>(1,i),this->_LUT_wrap_im.at<unsigned short>(0,i)) = *ptr_pix;
+//            }
+
 
             if (INPAIN_FLAG) mask_inpaint.at<uchar>(this->_LUT_wrap_im.at<unsigned short>(1,i),this->_LUT_wrap_im.at<unsigned short>(0,i)) = 0;
 
-        }else if(INPAIN_FLAG){
-
-//            mask_inpaint.at<uchar>(this->_LUT_wrap_im.at<unsigned short>(1,i),this->_LUT_wrap_im.at<unsigned short>(0,i)) = 128;
         }
 
         row_ind++;
@@ -238,5 +249,21 @@ void OmniCamera::StitchImage(int INPAIN_FLAG)
         ptr_pix = im_val.ptr<cv::Vec3b>(row_ind) + col_ind;
         ptr_mask = im_mask.ptr<uchar>(row_ind) + col_ind;
     }
+
     cv::inpaint(this->_pano,mask_inpaint,this->_pano,5,cv::INPAINT_TELEA);
+
+}
+
+
+void OmniCamera::SaveImage(const std::string &filename)
+{
+    cv::imwrite(filename,this->_pano);
+}
+
+
+void OmniCamera::ApplyBaseline()
+{
+    if(!this->IsInit() || this->camera_2->_LUTsphere.empty()) return;
+
+    this->camera_2->_LUTsphere = this->_extrin(cv::Rect(0,0,3,3)) * this->camera_2->_LUTsphere.empty();
 }

@@ -75,6 +75,8 @@ int main(int argc, char** argv){
 
     cv::imshow("imshow_cam1",omniSys.GetPano());
 
+    omniSys.SaveImage("panoIm.jpg");
+
     cv::waitKey(0);
 
     return 0;

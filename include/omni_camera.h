@@ -6,6 +6,8 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/photo/photo.hpp"
 
+#include <sensor_msgs/PointCloud.h>
+
 class OmniCamera {
 
     ros::NodeHandle nh_param;
@@ -45,7 +47,7 @@ class OmniCamera {
 
         void ApplyBaseline();
 
-
+        void CompRGBSph(cv::Mat cloudPoint);
 
 
 

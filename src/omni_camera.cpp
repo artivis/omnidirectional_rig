@@ -268,11 +268,89 @@ void OmniCamera::ApplyBaseline()
 {
     if(!this->IsInit() || this->camera_2->_LUTsphere.empty()) return;
 
-    this->camera_2->_LUTsphere = this->_extrin(cv::Rect(0,0,3,3)) * this->camera_2->_LUTsphere.empty();
+    this->camera_2->SetLUTSph(this->_extrin(cv::Rect(0,0,3,3)) * this->camera_2->GetLUT("Sphere"));
+
+//    this->camera_2->_LUTsphere = this->_extrin(cv::Rect(0,0,3,3)) * this->camera_2->_LUTsphere.empty();
 }
 
 
+void OmniCamera::CompRGBSph(cv::Mat cloudPoint)
+{
+    if (!this->IsInit()) return;
 
+    if (this->_LUTsphere.empty())
+    {
+        if (this->camera_1->_LUTsphere.empty())
+        {
+            this->camera_1->Im2Sph(this->camera_1->_Frame.rows,this->camera_1->_Frame.cols);
+        }
+        if (this->camera_2->_LUTsphere.empty())
+        {
+            this->camera_2->Im2Sph(this->camera_2->_Frame.rows,this->camera_2->_Frame.cols);
+        }
+
+        this->ApplyBaseline();
+
+        this->MergeLUT();
+    }
+
+    sensor_msgs::PointCloud PointCloud;
+
+    ros::Time timeStamp = ros::Time::now();
+
+    PointCloud.header.stamp = timeStamp;
+    PointCloud.header.frame_id = "head"; //find robot head frame
+
+    PointCloud.points.resize(this->_LUTsphere.cols);
+
+    PointCloud.channels.resize(3);
+
+    PointCloud.channels[0].name = "g";
+    PointCloud.channels[1].name = "b";
+    PointCloud.channels[2].name = "r";
+
+    PointCloud.channels[0].values.resize(this->_LUTsphere.cols);
+    PointCloud.channels[1].values.resize(this->_LUTsphere.cols);
+    PointCloud.channels[2].values.resize(this->_LUTsphere.cols);
+
+    int row_ind = 0;
+    int col_ind = 0;
+
+    int pix_im1 = this->camera_1->_cameraParam.imSize.cols * this->camera_1->_cameraParam.imSize.rows;
+
+    cv::Mat im_val = this->camera_1->_Frame;
+
+    const cv::Vec3f *ptr_pix;
+    ptr_pix = im_val.ptr<cv::Vec3f>(row_ind) + col_ind;
+
+    for (int i = 0; i<this->_LUTsphere.cols; i++)
+    {
+        PointCloud.points[i].x = this->_LUTsphere.at<float>(0,i);
+        PointCloud.points[i].y = this->_LUTsphere.at<float>(1,i);
+        PointCloud.points[i].z = this->_LUTsphere.at<float>(2,i);
+
+        PointCloud.channels[0].values[i] = (*ptr_pix)[0]/255; //g
+        PointCloud.channels[1].values[i] = (*ptr_pix)[1]/255; //b
+        PointCloud.channels[2].values[i] = (*ptr_pix)[2]/255; //r
+
+        row_ind++;
+
+        if (row_ind == im_val.rows)
+        {
+            row_ind = 0;
+            col_ind++;
+        }
+
+        if (i == pix_im1-1)
+        {
+            im_val = this->camera_2->_Frame;
+            row_ind = 0;
+            col_ind = 0;
+        }
+
+        ptr_pix = im_val.ptr<cv::Vec3f>(row_ind) + col_ind;
+    }
+}
 
 
 

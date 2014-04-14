@@ -153,6 +153,11 @@ void FishEye::SetImageSize(int rows, int cols){
     this->_cameraParam.imSize.cols = cols;
 }
 
+void FishEye::SetLUTSph(const cv::Mat &LUTSph)
+{
+    this->_LUTsphere = LUTSph;
+}
+
 void FishEye::ReleaseLut(){
     if (!this->_LUT_wrap_im.empty()) this->_LUT_wrap_im.release();
     if (!this->_LUTsphere.empty()) this->_LUTsphere.release();
@@ -304,7 +309,7 @@ void FishEye::Im2Sph(int rows,int cols){
     }
 }
 
-void FishEye::Im2Sph(const cv::Size& im){
+void FishEye::Im2Sph(const cv::Size im){
 
     this->Im2Sph(im.height,im.width);
 

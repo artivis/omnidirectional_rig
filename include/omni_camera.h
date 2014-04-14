@@ -45,6 +45,10 @@ class OmniCamera {
 
         void ApplyBaseline();
 
+
+
+
+
         bool IsInit();
 
         cv::Mat GetExtrin();

@@ -267,3 +267,10 @@ void OmniCamera::ApplyBaseline()
 
     this->camera_2->_LUTsphere = this->_extrin(cv::Rect(0,0,3,3)) * this->camera_2->_LUTsphere.empty();
 }
+
+
+
+
+
+
+

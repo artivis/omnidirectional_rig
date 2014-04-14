@@ -10,6 +10,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <ros/ros.h>
+#include <cv_bridge/cv_bridge.h>
 #include <yaml-cpp/yaml.h>
 
 #include "image_handler.h"
@@ -66,6 +67,7 @@ public:
     void SetIntrinsic(const cv::Mat&);
     void SetImageSize(const imageSize&);
     void SetImageSize(int rows, int cols);
+    void ReadFrame();
 
     void ReleaseLut();
 

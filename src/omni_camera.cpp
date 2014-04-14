@@ -141,6 +141,9 @@ void OmniCamera::LoadLUT(const std::vector<std::string> &LUTfiles, const std::ve
 
 void OmniCamera::MergeLUT(cv::Size size)
 {
+
+    if(this->camera_1->_LUT_wrap_im.empty() || this->camera_2->_LUT_wrap_im.empty()) return;
+
     cv::Mat tmp;
 
     cv::hconcat(this->camera_1->_LUT_wrap_im,this->camera_2->_LUT_wrap_im,tmp);

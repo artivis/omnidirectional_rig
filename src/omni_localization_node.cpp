@@ -33,8 +33,8 @@ int main(int argc, char** argv){
     maskCamera_1  = "etc/images/cam1/Img_mask1.jpg";
     maskCamera_2  = "etc/images/cam2/Img_mask2.jpg";
 
-    topics_name.push_back("/whatever");
-    topics_name.push_back("/whatever");
+    topics_name.push_back("/left/image_raw");
+    topics_name.push_back("/right/image_raw");
 
     extrinParam = "etc/calib/extrinsicParam.yaml";
 
@@ -48,15 +48,47 @@ int main(int argc, char** argv){
 
     omniSys.DispParam();
 
-    omniSys.camera_1->readImage(im_cam1);
-    omniSys.camera_2->readImage(im_cam2);
-
-    omniSys.camera_1->LoadMask(maskCamera_1);
-    omniSys.camera_2->LoadMask(maskCamera_2);
-
-    omniSys.LoadLUT(LUTs_file,LUTs_type);
-
     cv::namedWindow("imshow_cam1",cv::WINDOW_NORMAL);
+    cv::namedWindow("imshow_cam2",cv::WINDOW_NORMAL);
+
+    cv::Mat ima1;
+    cv::Mat ima2;
+
+//    int tt = cv::waitKey(50);
+
+//    std::cout<<"key val . "<< tt <<std::endl;
+
+    while (true)
+    {
+        omniSys.camera_1->ReadFrame();
+        omniSys.camera_2->ReadFrame();
+
+        ima1 = omniSys.camera_1->getImage();
+        ima2 = omniSys.camera_2->getImage();
+
+        cv::imshow("imshow_cam1",ima1);
+        cv::imshow("imshow_cam2",ima2);
+
+        std::cout<<"caloop "<<std::endl;
+
+        int tt = cv::waitKey(50);
+
+        std::cout<<"key val . "<< tt <<std::endl;
+
+        if (cv::waitKey(50) == 131143) break; //q key
+    }
+
+
+
+//    omniSys.camera_1->readImage(im_cam1);
+//    omniSys.camera_2->readImage(im_cam2);
+
+//    omniSys.camera_1->LoadMask(maskCamera_1);
+//    omniSys.camera_2->LoadMask(maskCamera_2);
+
+//    omniSys.LoadLUT(LUTs_file,LUTs_type);
+
+
 //    cv::imshow("imshow_cam1",omniSys.camera_1->getImage());
 
 //    cv::namedWindow("imshow_cam2",cv::WINDOW_NORMAL);
@@ -69,13 +101,13 @@ int main(int argc, char** argv){
 
 //    cv::waitKey(0);
 
-    omniSys.MergeLUT();
+//    omniSys.MergeLUT();
 
-    omniSys.StitchImage(1);
+//    omniSys.StitchImage(1);
 
-    cv::imshow("imshow_cam1",omniSys.GetPano());
+//    cv::imshow("imshow_cam1",omniSys.GetPano());
 
-    omniSys.SaveImage("panoIm.jpg");
+
 
     cv::waitKey(0);
 

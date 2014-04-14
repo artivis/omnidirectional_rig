@@ -113,6 +113,17 @@ cv::Mat FishEye::GetMask(){
     return this->_Mask;
 }
 
+void FishEye::ReadFrame(){
+
+    sensor_msgs::ImageConstPtr frame = ImageHandler::waitUntilImageReceived();
+
+    cv_bridge::CvImagePtr cvPtr;
+
+    cvPtr = cv_bridge::toCvCopy(frame,"8UC3");
+
+    this->_Frame = cvPtr->image;
+}
+
 cv::Mat FishEye::getImage(){
     return this->_Frame;
 }

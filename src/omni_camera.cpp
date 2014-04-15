@@ -90,6 +90,8 @@ bool OmniCamera::LoadCalibration(const std::string& paramPath){
 
     fs.release();
 
+    this->_extrin.convertTo(this->_extrin,CV_32FC1);
+
     return true;
 }
 
@@ -139,7 +141,7 @@ void OmniCamera::LoadLUT(const std::vector<std::string> &LUTfiles, const std::ve
     this->camera_2->LoadLUT(LUTfiles[1],LUTtype[1]);
 }
 
-void OmniCamera::MergeLUT(cv::Size size)
+void OmniCamera::MergeLUTWrap(cv::Size size)
 {
 
     if(this->camera_1->_LUT_wrap_im.empty() || this->camera_2->_LUT_wrap_im.empty()) return;
@@ -151,19 +153,31 @@ void OmniCamera::MergeLUT(cv::Size size)
     this->camera_1->ReleaseLut();
     this->camera_2->ReleaseLut();
 
-    this->_LUT_wrap_im = cv::Mat::zeros(tmp.rows,tmp.cols,CV_16UC1);
+//    this->_LUT_wrap_im = cv::Mat::zeros(tmp.rows,tmp.cols,CV_16UC1);
 
     double min,max;
 
-    cv::minMaxLoc(tmp.row(0),&min,&max);
+    for (int i = 0; i<2; i++)
+    {
+        cv::minMaxLoc(tmp.row(i),&min,&max);
 
-    tmp.row(0).convertTo(this->_LUT_wrap_im.row(0), CV_16UC1
-                         ,(double)(size.width/(max-min)),(double)(- (min * (size.width/(max-min)))));
+        tmp.row(i).convertTo(this->_LUT_wrap_im.row(i), CV_16UC1
+                             ,(double)(size.width/(max-min)),(double)(- (min * (size.width/(max-min)))));
+    }
+}
 
-    cv::minMaxLoc(tmp.row(1),&min,&max);
+void OmniCamera::MergeLUTSph()
+{
+    if(this->camera_1->_LUTsphere.empty() || this->camera_2->_LUTsphere.empty()) return;
 
-    tmp.row(1).convertTo(this->_LUT_wrap_im.row(1),CV_16UC1,
-                         size.height/(max-min),- (min * (size.height/(max-min))));
+    cv::Mat tmp;
+
+    cv::hconcat(this->camera_1->_LUTsphere,this->camera_2->_LUTsphere,tmp);
+
+    this->camera_1->ReleaseLut();
+    this->camera_2->ReleaseLut();
+
+    tmp.convertTo(this->_LUTsphere,CV_32FC1);
 }
 
 void OmniCamera::RescaleWrapLUT(cv::Size size)
@@ -189,6 +203,9 @@ void OmniCamera::StitchImage(int INPAIN_FLAG)
     {
         return;
     }
+
+    if (this->camera_1->_Mask.empty()) this->camera_1->_Mask = cv::Mat::ones(this->camera_1->_cameraParam.imSize.rows,this->camera_1->_cameraParam.imSize.cols,CV_8UC1);
+    if (this->camera_2->_Mask.empty()) this->camera_2->_Mask = cv::Mat::ones(this->camera_2->_cameraParam.imSize.rows,this->camera_2->_cameraParam.imSize.cols,CV_8UC1);
 
     this->_pano = cv::Mat::zeros(this->_panoSize, 16);
 
@@ -268,13 +285,13 @@ void OmniCamera::ApplyBaseline()
 {
     if(!this->IsInit() || this->camera_2->_LUTsphere.empty()) return;
 
-    this->camera_2->SetLUTSph(this->_extrin(cv::Rect(0,0,3,3)) * this->camera_2->GetLUT("Sphere"));
+    cv::Mat tmp = this->_extrin(cv::Rect(0,0,3,3)) * this->camera_2->_LUTsphere;
 
-//    this->camera_2->_LUTsphere = this->_extrin(cv::Rect(0,0,3,3)) * this->camera_2->_LUTsphere.empty();
+    tmp.copyTo(this->camera_2->_LUTsphere);
 }
 
 
-void OmniCamera::CompRGBSph(cv::Mat cloudPoint)
+void OmniCamera::MessRGBSph(sensor_msgs::PointCloud &PointCloud, bool OFF)
 {
     if (!this->IsInit()) return;
 
@@ -291,23 +308,25 @@ void OmniCamera::CompRGBSph(cv::Mat cloudPoint)
 
         this->ApplyBaseline();
 
-        this->MergeLUT();
+        this->MergeLUTSph();
     }
 
-    sensor_msgs::PointCloud PointCloud;
+    if (this->_LUTsphere.empty()) return;
 
     ros::Time timeStamp = ros::Time::now();
 
     PointCloud.header.stamp = timeStamp;
-    PointCloud.header.frame_id = "head"; //find robot head frame
+
+//    PointCloud.header.frame_id = "head_1_link";
+    PointCloud.header.frame_id = "base_link";
 
     PointCloud.points.resize(this->_LUTsphere.cols);
 
     PointCloud.channels.resize(3);
 
-    PointCloud.channels[0].name = "g";
-    PointCloud.channels[1].name = "b";
-    PointCloud.channels[2].name = "r";
+    PointCloud.channels[0].name = "r";
+    PointCloud.channels[1].name = "g";
+    PointCloud.channels[2].name = "b";
 
     PointCloud.channels[0].values.resize(this->_LUTsphere.cols);
     PointCloud.channels[1].values.resize(this->_LUTsphere.cols);
@@ -318,20 +337,75 @@ void OmniCamera::CompRGBSph(cv::Mat cloudPoint)
 
     int pix_im1 = this->camera_1->_cameraParam.imSize.cols * this->camera_1->_cameraParam.imSize.rows;
 
-    cv::Mat im_val = this->camera_1->_Frame;
+    cv::Mat im_val;
+    this->camera_1->_Frame.convertTo(im_val,CV_32FC3);
+    cv::Mat mask = this->camera_1->_Mask;
 
     const cv::Vec3f *ptr_pix;
     ptr_pix = im_val.ptr<cv::Vec3f>(row_ind) + col_ind;
 
+    const uchar *ptr_mask;
+    ptr_mask = mask.ptr<uchar>(row_ind) + col_ind;
+
+    cv::Mat Rot90 = cv::Mat::eye(3,3,CV_32FC1);
+
+//    Rot90.at<float>(1,1) =  cos( 180 * (pi/180) ); //pitch
+//    Rot90.at<float>(1,3) =  sin( 180 * (pi/180) );
+//    Rot90.at<float>(3,1) = -sin( 180 * (pi/180) );
+//    Rot90.at<float>(3,3) =  cos( 180 * (pi/180) );
+
+//    Rot90.at<float>(1,1) =  cos( 180 * (pi/180) ); //yaw
+//    Rot90.at<float>(1,2) = -sin( 180 * (pi/180) );
+//    Rot90.at<float>(2,1) =  sin( 180 * (pi/180) );
+//    Rot90.at<float>(2,2) =  cos( 180 * (pi/180) );
+
+//    Rot90.at<float>(2,2) =  cos( 90 * (pi/180) ); //roll
+//    Rot90.at<float>(2,3) = -sin( 90 * (pi/180) );
+//    Rot90.at<float>(3,2) =  sin( 90 * (pi/180) );
+//    Rot90.at<float>(3,3) =  cos( 90 * (pi/180) );
+
+    cv::Mat tmp;
+
+    FILE * pfile;
+
+    if (OFF)
+    {
+        pfile = fopen("./sphereRGB.OFF","w");
+
+        fprintf(pfile,"%s\n","COFF");
+        fprintf(pfile,"%i",this->_LUTsphere.cols-1);
+        fprintf(pfile," %s\n","0 0");
+    }
+
     for (int i = 0; i<this->_LUTsphere.cols; i++)
     {
-        PointCloud.points[i].x = this->_LUTsphere.at<float>(0,i);
-        PointCloud.points[i].y = this->_LUTsphere.at<float>(1,i);
-        PointCloud.points[i].z = this->_LUTsphere.at<float>(2,i);
 
-        PointCloud.channels[0].values[i] = (*ptr_pix)[0]/255; //g
-        PointCloud.channels[1].values[i] = (*ptr_pix)[1]/255; //b
-        PointCloud.channels[2].values[i] = (*ptr_pix)[2]/255; //r
+        if (*ptr_mask > 0)
+        {
+//            tmp = Rot90 * this->_LUTsphere.col(i);
+
+//            PointCloud.points[i].x = tmp.at<float>(0,0) ;
+//            PointCloud.points[i].y = tmp.at<float>(1,0) ;
+//            PointCloud.points[i].z = tmp.at<float>(2,0) ;
+
+            PointCloud.points[i].x = this->_LUTsphere.at<float>(0,i) ;
+            PointCloud.points[i].y = this->_LUTsphere.at<float>(1,i) ;
+            PointCloud.points[i].z = this->_LUTsphere.at<float>(2,i) ;
+
+            PointCloud.channels[0].values[i] = (*ptr_pix)[2]/255.0; //r
+            PointCloud.channels[1].values[i] = (*ptr_pix)[1]/255.0; //g
+            PointCloud.channels[2].values[i] = (*ptr_pix)[0]/255.0; //b
+
+//            std::cout<<"full : "<<*ptr_pix <<std::endl;
+//            std::cout<<"B : "<<(*ptr_pix)[0]/255.0 <<std::endl;
+//            std::cout<<"G : "<<(*ptr_pix)[1]/255.0 <<std::endl;
+//            std::cout<<"R : "<<(*ptr_pix)[2]/255.0 <<std::endl;
+
+            if (OFF){
+                fprintf(pfile,"%f %f %f %i %i %i\n",PointCloud.points[i].x,PointCloud.points[i].y,PointCloud.points[i].z,
+                        this->_LUTsphere.at<uchar>(2,i),this->_LUTsphere.at<uchar>(1,i),this->_LUTsphere.at<uchar>(0,i));
+            }
+        }
 
         row_ind++;
 
@@ -343,12 +417,19 @@ void OmniCamera::CompRGBSph(cv::Mat cloudPoint)
 
         if (i == pix_im1-1)
         {
-            im_val = this->camera_2->_Frame;
+            this->camera_2->_Frame.convertTo(im_val,CV_32FC3); ;
+            mask = this->camera_2->_Mask;
             row_ind = 0;
             col_ind = 0;
         }
 
         ptr_pix = im_val.ptr<cv::Vec3f>(row_ind) + col_ind;
+        ptr_mask = mask.ptr<uchar>(row_ind) + col_ind;
+    }
+
+    if (OFF)
+    {
+        fclose(pfile);
     }
 }
 

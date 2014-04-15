@@ -36,6 +36,8 @@ bool FishEye::_loadParam(const std::string &paramPath)
         return false;
     }
 
+
+
     fs["type"] >> this->_cameraParam.cameraType;
     fs["xi"] >> this->_cameraParam.xi;
     fs["K"] >> this->_cameraParam.intrinParam;
@@ -46,6 +48,8 @@ bool FishEye::_loadParam(const std::string &paramPath)
     fn["cols"] >> this->_cameraParam.imSize.cols;
 
     fs.release();
+
+    this->_cameraParam.intrinParam.convertTo(this->_cameraParam.intrinParam,CV_32FC1);
 
     return true;
 }
@@ -267,7 +271,7 @@ void FishEye::LoadMask(const std::string& maskFile){
 
     cv::threshold(tmp,tmp,240,1,cv::THRESH_BINARY);
 
-    tmp.convertTo(this->_Mask,0);
+    tmp.convertTo(this->_Mask,CV_8UC1);
 }
 
 void FishEye::readImage(std::string file){
@@ -280,39 +284,66 @@ void FishEye::Im2Sph(int rows,int cols){
 
     if (!this->IsInit()) return;
 
+    if (this->_Mask.empty()) this->_Mask = cv::Mat::ones(this->_cameraParam.imSize.rows,this->_cameraParam.imSize.cols,CV_8UC1);
+
     this->_LUTsphere = cv::Mat::zeros(3,rows * cols,CV_32FC1);
 
     cv::Mat pts = cv::Mat::ones(3,1,CV_32FC1);
 
     float alpha;
 
-    int i = 0;
+    int i = 0;      //std::cout << "In im2sph "<<std::endl;
 
-    for (int row = 0; row < rows; row++)
+    cv::Mat inv_K = this->_cameraParam.intrinParam.inv();
+
+    std::complex<float> tmp;
+
+    for (int col = 0; col < cols; col++)
     {
-        for (int col = 0; col < cols; col++)
+        for (int row = 0; row < rows; row++)
         {
-            pts.at<float>(0) = col;
-            pts.at<float>(1) = row;
+            if (!this->_Mask.at<uchar>(row,col) == 0)
+            {
+                pts.at<float>(0) = (float)col;
+                pts.at<float>(1) = (float)row;
 
-            pts = this->_cameraParam.intrinParam.inv() * pts;
+                //            std::cout << "pts : "<< pts<<std::endl;
 
-            alpha = (this->_cameraParam.xi * pts.at<float>(3) + sqrt(pts.at<float>(3)*pts.at<float>(3) + (1-this->_cameraParam.xi*this->_cameraParam.xi)*
-                        (pts.at<float>(0)*pts.at<float>(0) + pts.at<float>(1)*pts.at<float>(1)))) / cv::norm(pts);
+                pts = inv_K * pts;
 
-            this->_LUTsphere.at<float>(0,i) = pts.at<float>(0) * alpha;
-            this->_LUTsphere.at<float>(1,i) = pts.at<float>(1) * alpha;
-            this->_LUTsphere.at<float>(2,i) = pts.at<float>(2) * alpha;
+                //            std::cout << "K pts : "<< pts<<std::endl;
+
+                tmp = std::sqrt( std::complex<float>(pts.at<float>(2)*pts.at<float>(2) + (1-this->_cameraParam.xi*this->_cameraParam.xi)*
+                                                     (pts.at<float>(0)*pts.at<float>(0) + pts.at<float>(1)*pts.at<float>(1))) );
+
+                alpha = (this->_cameraParam.xi * pts.at<float>(2) + tmp.real()) / cv::norm(pts);
+
+
+                //            std::cout << "before comp conv : "<< pts.at<float>(2)*pts.at<float>(2) + (1-this->_cameraParam.xi*this->_cameraParam.xi)*
+                //                                        (pts.at<float>(0)*pts.at<float>(0) + pts.at<float>(1)*pts.at<float>(1)) <<std::endl;
+
+                //            std::cout << "after comp conv : "<< std::complex<float>(pts.at<float>(2)*pts.at<float>(2) + (1-this->_cameraParam.xi*this->_cameraParam.xi)*
+                //                                                                    (pts.at<float>(0)*pts.at<float>(0) + pts.at<float>(1)*pts.at<float>(1))) <<std::endl;
+
+                //            std::cout << "tmp : "<< tmp <<std::endl;
+                //            std::cout << "tmp real : "<< tmp.real() <<std::endl;
+
+
+                //            std::cout << "alpha : "<< alpha<<std::endl;
+
+                this->_LUTsphere.at<float>(0,i) = pts.at<float>(0) * alpha;
+                this->_LUTsphere.at<float>(1,i) = pts.at<float>(1) * alpha;
+                this->_LUTsphere.at<float>(2,i) = pts.at<float>(2) * alpha - this->_cameraParam.xi;
+            }
 
             i++;
+
         }
-    }
+    }       //std::cout << "out im2sph "<<std::endl;
 }
 
-void FishEye::Im2Sph(const cv::Size im){
-
+void FishEye::Im2Sph(const cv::Size &im){
     this->Im2Sph(im.height,im.width);
-
 }
 
 
@@ -330,7 +361,7 @@ cv::Vec3f FishEye::Pix2Sph(int ind_row, int ind_col)
 
     _pts = this->_cameraParam.intrinParam.inv() * _pts;
 
-    alpha = (this->_cameraParam.xi * _pts.at<float>(3) + sqrt(_pts.at<float>(3)*_pts.at<float>(3) + (1-this->_cameraParam.xi*this->_cameraParam.xi)*
+    alpha = (this->_cameraParam.xi * _pts.at<float>(2) + sqrt(_pts.at<float>(2)*_pts.at<float>(2) + (1-this->_cameraParam.xi*this->_cameraParam.xi)*
                 (_pts.at<float>(0)*_pts.at<float>(0) + _pts.at<float>(1)*_pts.at<float>(1)))) / cv::norm(_pts);
 
     pts[0] = _pts.at<float>(0) * alpha;

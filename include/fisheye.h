@@ -5,6 +5,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <complex>
 
 
 #include <opencv2/core/core.hpp>
@@ -82,7 +83,7 @@ public:
 
     void readImage(std::string file);
 
-    void Im2Sph(const cv::Size im = cv::Size(1280,1024));
+    void Im2Sph(const cv::Size &im = cv::Size(1280,1024));
     void Im2Sph(int rows = 1024,int cols = 1280);
     cv::Vec3f Pix2Sph(int ind_row, int ind_col);
 

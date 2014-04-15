@@ -8,6 +8,8 @@
 
 #include <sensor_msgs/PointCloud.h>
 
+#include <stdio.h>
+
 class OmniCamera {
 
     ros::NodeHandle nh_param;
@@ -37,7 +39,9 @@ class OmniCamera {
 
         void LoadLUT(const std::vector<std::string> &, const std::vector<std::string> &);
 
-        void MergeLUT(cv::Size size = cv::Size(1200,400));
+        void MergeLUTWrap(cv::Size size = cv::Size(1200,400));
+
+        void MergeLUTSph();
 
         void RescaleWrapLUT(cv::Size size = cv::Size(1200,400));
 
@@ -47,9 +51,7 @@ class OmniCamera {
 
         void ApplyBaseline();
 
-        void CompRGBSph(cv::Mat cloudPoint);
-
-
+        void MessRGBSph(sensor_msgs::PointCloud &, bool OFF = false);
 
         bool IsInit();
 

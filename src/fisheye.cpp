@@ -292,7 +292,7 @@ void FishEye::Im2Sph(int rows,int cols){
 
     float alpha;
 
-    int i = 0;      //std::cout << "In im2sph "<<std::endl;
+    int i = 0;
 
     cv::Mat inv_K = this->_cameraParam.intrinParam.inv();
 
@@ -331,15 +331,13 @@ void FishEye::Im2Sph(int rows,int cols){
 
                 //            std::cout << "alpha : "<< alpha<<std::endl;
 
-                this->_LUTsphere.at<float>(0,i) = pts.at<float>(0) * alpha;
-                this->_LUTsphere.at<float>(1,i) = pts.at<float>(1) * alpha;
-                this->_LUTsphere.at<float>(2,i) = pts.at<float>(2) * alpha - this->_cameraParam.xi;
+                this->_LUTsphere.at<float>(0,i) =  pts.at<float>(0) * alpha;
+                this->_LUTsphere.at<float>(1,i) =  pts.at<float>(1) * alpha;
+                this->_LUTsphere.at<float>(2,i) = (pts.at<float>(2) - this->_cameraParam.xi) * alpha; //check alpha*(Z-xi) or alpha*Z-xi
             }
-
             i++;
-
         }
-    }       //std::cout << "out im2sph "<<std::endl;
+    }
 }
 
 void FishEye::Im2Sph(const cv::Size &im){

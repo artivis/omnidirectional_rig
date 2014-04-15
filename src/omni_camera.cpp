@@ -290,8 +290,21 @@ void OmniCamera::ApplyBaseline()
     tmp.copyTo(this->camera_2->_LUTsphere);
 }
 
+void OmniCamera::Rotate90roll()
+{
+    cv::Mat Rot90roll = cv::Mat::eye(3,3,CV_32FC1);
 
-void OmniCamera::MessRGBSph(sensor_msgs::PointCloud &PointCloud, bool OFF)
+    Rot90roll.at<float>(2,2) =  cos( 90 * (pi/180) ); //roll
+    Rot90roll.at<float>(2,3) = -sin( 90 * (pi/180) );
+    Rot90roll.at<float>(3,2) =  sin( 90 * (pi/180) );
+    Rot90roll.at<float>(3,3) =  cos( 90 * (pi/180) );
+
+    cv::Mat tmp = Rot90roll * this->_LUTsphere;
+
+    tmp.copyTo(this->_LUTsphere);
+}
+
+void OmniCamera::MessRGBSph(sensor_msgs::PointCloud &PointCloud, int sampling, bool OFF)
 {
     if (!this->IsInit()) return;
 
@@ -309,6 +322,8 @@ void OmniCamera::MessRGBSph(sensor_msgs::PointCloud &PointCloud, bool OFF)
         this->ApplyBaseline();
 
         this->MergeLUTSph();
+
+        this->Rotate90roll(); //change later by a proper tf
     }
 
     if (this->_LUTsphere.empty()) return;
@@ -347,25 +362,6 @@ void OmniCamera::MessRGBSph(sensor_msgs::PointCloud &PointCloud, bool OFF)
     const uchar *ptr_mask;
     ptr_mask = mask.ptr<uchar>(row_ind) + col_ind;
 
-    cv::Mat Rot90 = cv::Mat::eye(3,3,CV_32FC1);
-
-//    Rot90.at<float>(1,1) =  cos( 180 * (pi/180) ); //pitch
-//    Rot90.at<float>(1,3) =  sin( 180 * (pi/180) );
-//    Rot90.at<float>(3,1) = -sin( 180 * (pi/180) );
-//    Rot90.at<float>(3,3) =  cos( 180 * (pi/180) );
-
-//    Rot90.at<float>(1,1) =  cos( 180 * (pi/180) ); //yaw
-//    Rot90.at<float>(1,2) = -sin( 180 * (pi/180) );
-//    Rot90.at<float>(2,1) =  sin( 180 * (pi/180) );
-//    Rot90.at<float>(2,2) =  cos( 180 * (pi/180) );
-
-//    Rot90.at<float>(2,2) =  cos( 90 * (pi/180) ); //roll
-//    Rot90.at<float>(2,3) = -sin( 90 * (pi/180) );
-//    Rot90.at<float>(3,2) =  sin( 90 * (pi/180) );
-//    Rot90.at<float>(3,3) =  cos( 90 * (pi/180) );
-
-    cv::Mat tmp;
-
     FILE * pfile;
 
     if (OFF)
@@ -377,17 +373,11 @@ void OmniCamera::MessRGBSph(sensor_msgs::PointCloud &PointCloud, bool OFF)
         fprintf(pfile," %s\n","0 0");
     }
 
-    for (int i = 0; i<this->_LUTsphere.cols; i++)
+    for (int i = 0; i<this->_LUTsphere.cols; i += sampling)
     {
 
         if (*ptr_mask > 0)
         {
-//            tmp = Rot90 * this->_LUTsphere.col(i);
-
-//            PointCloud.points[i].x = tmp.at<float>(0,0) ;
-//            PointCloud.points[i].y = tmp.at<float>(1,0) ;
-//            PointCloud.points[i].z = tmp.at<float>(2,0) ;
-
             PointCloud.points[i].x = this->_LUTsphere.at<float>(0,i) ;
             PointCloud.points[i].y = this->_LUTsphere.at<float>(1,i) ;
             PointCloud.points[i].z = this->_LUTsphere.at<float>(2,i) ;

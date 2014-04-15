@@ -51,7 +51,9 @@ class OmniCamera {
 
         void ApplyBaseline();
 
-        void MessRGBSph(sensor_msgs::PointCloud &, bool OFF = false);
+        void MessRGBSph(sensor_msgs::PointCloud &, int sampling = 1, bool OFF = false);
+
+        void Rotate90roll();
 
         bool IsInit();
 

@@ -84,15 +84,13 @@ int main(int argc, char** argv){
 //        if (cv::waitKey(50) == 131143) break; //q key
 //    }
 
-
-
     omniSys.camera_1->readImage(im_cam1);
     omniSys.camera_2->readImage(im_cam2);
 
     omniSys.camera_1->LoadMask(maskCamera_1);
     omniSys.camera_2->LoadMask(maskCamera_2);
 
-    omniSys.LoadLUT(LUTs_file,LUTs_type);
+//    omniSys.LoadLUT(LUTs_file,LUTs_type);
 
 //    cv::imshow("imshow_cam1",omniSys.camera_1->getImage());
 //    cv::imshow("imshow_cam2",omniSys.camera_2->getImage());

@@ -61,9 +61,9 @@ void GetSphSampGrid(int bandwidth, cv::Mat &pts, bool ishemi){
 
     for (;it_theta!=it_theta_end;it_theta++)
     {
-        *it_theta = pi*(2*i+1) / (4*bandwidth);
+        *it_theta = mypi*(2*i+1) / (4*bandwidth);
 
-        *it_phi = pi*i / (hemi*bandwidth);
+        *it_phi = mypi*i / (hemi*bandwidth);
 
         it_phi++;
         i++;

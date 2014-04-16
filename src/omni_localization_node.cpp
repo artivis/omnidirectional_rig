@@ -30,11 +30,11 @@ int main(int argc, char** argv){
     std::string maskCamera_2;
     std::string extrinParam;
 
-    path_yamls_cam.push_back("etc/calib/intrinsicParam_cam1.yaml");
-    path_yamls_cam.push_back("etc/calib/intrinsicParam_cam1.yaml");
+    path_yamls_cam.push_back("etc/calib/Pal_intrinsicParam_cam1.yaml");
+    path_yamls_cam.push_back("etc/calib/Pal_intrinsicParam_cam2.yaml");
 
-    im_cam1 = "etc/images/cam1/cal_seq3_cam1_1.bmp";
-    im_cam2 = "etc/images/cam2/cal_seq3_cam2_1.bmp";
+    im_cam1 = "etc/images/cam1/left_frame0000.jpg";
+    im_cam2 = "etc/images/cam2/right_frame0000.jpg";
 
     maskCamera_1  = "etc/images/cam1/Img_mask1.jpg";
     maskCamera_2  = "etc/images/cam2/Img_mask2.jpg";
@@ -42,13 +42,13 @@ int main(int argc, char** argv){
     topics_name.push_back("/left/image_raw");
     topics_name.push_back("/right/image_raw");
 
-    extrinParam = "etc/calib/extrinsicParam.yaml";
+    extrinParam = "etc/calib/Pal_extrinsicParam.yaml";
 
     LUTs_file.push_back("etc/calib/LUT_sph_cam1.txt");
     LUTs_file.push_back("etc/calib/LUT_sph_cam2.txt");
 
-    LUTs_type.push_back("PlCa");
-    LUTs_type.push_back("PlCa");
+    LUTs_type.push_back("Sphere");
+    LUTs_type.push_back("Sphere");
 
     OmniCamera omniSys(topics_name,path_yamls_cam,extrinParam);
 
@@ -84,8 +84,8 @@ int main(int argc, char** argv){
 //        if (cv::waitKey(50) == 131143) break; //q key
 //    }
 
-    omniSys.camera_1->readImage(im_cam1);
-    omniSys.camera_2->readImage(im_cam2);
+//    omniSys.camera_1->readImage(im_cam1);
+//    omniSys.camera_2->readImage(im_cam2);
 
     omniSys.camera_1->LoadMask(maskCamera_1);
     omniSys.camera_2->LoadMask(maskCamera_2);
@@ -110,8 +110,21 @@ int main(int argc, char** argv){
 
     double time;
 
+    omniSys.SetRGBSphSamp(1);
+
+    omniSys.PartiallyFillMess(ptsCld);
+
+    std::cout<<" mess : "<<ptsCld.points.size()<<std::endl;
+
     do
     {
+        std::cout << "before frame : "<<std::endl;
+
+        omniSys.camera_1->ReadFrame();
+        omniSys.camera_2->ReadFrame();
+
+        std::cout << "after frame : "<<std::endl;
+
         time = (double)cv::getTickCount();
 
         omniSys.MessRGBSph(ptsCld);

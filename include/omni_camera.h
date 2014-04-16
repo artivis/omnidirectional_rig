@@ -51,7 +51,9 @@ class OmniCamera {
 
         void ApplyBaseline();
 
-        void MessRGBSph(sensor_msgs::PointCloud &, int sampling = 1, bool OFF = false);
+        void MessRGBSph(sensor_msgs::PointCloud &);
+
+        void PartiallyFillMess(sensor_msgs::PointCloud &);
 
         void Rotate90roll();
 
@@ -63,9 +65,11 @@ class OmniCamera {
 
         cv::Mat GetLUT();
 
+        int GetRGBSphSamp();
+
         void SetExtrin(const cv::Mat &);
 
-
+        void SetRGBSphSamp(int);
 
     private :
 
@@ -79,6 +83,8 @@ class OmniCamera {
 
         cv::Mat _LUTsphere;
         cv::Mat _LUT_wrap_im;
+
+        int _RGBSphSamp;
 
 };
 

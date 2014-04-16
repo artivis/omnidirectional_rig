@@ -11,6 +11,8 @@ OmniCamera::OmniCamera(const std::vector<std::string> &topicsName, const std::ve
     this->_panoSize = cv::Size(1200,400);
 
     this->_init = false;
+
+    _RGBSphSamp = 1;
 }
 
 OmniCamera::OmniCamera(const std::vector<std::string> &topicsName, const std::vector<std::string> &cameraParamPath, const std::string &extrinPath)
@@ -25,6 +27,8 @@ OmniCamera::OmniCamera(const std::vector<std::string> &topicsName, const std::ve
     this->_panoSize = cv::Size(1200,400);
 
     this->_init = true;
+
+    _RGBSphSamp = 1;
 
 }
 
@@ -127,6 +131,14 @@ cv::Mat OmniCamera::GetLUT(){
 void OmniCamera::SetExtrin(const cv::Mat &extrin){
     this->_extrin = extrin;
 
+}
+
+int OmniCamera::GetRGBSphSamp(){
+    return this->_RGBSphSamp;
+}
+
+void OmniCamera::SetRGBSphSamp(int sampling){
+    this->_RGBSphSamp = sampling;
 }
 
 void OmniCamera::LoadLUT(const std::vector<std::string> &LUTfiles, const std::vector<std::string> &LUTtype)
@@ -287,36 +299,40 @@ void OmniCamera::ApplyBaseline()
 
     cv::Mat tmp = this->_extrin(cv::Rect(0,0,3,3)) * this->camera_2->_LUTsphere;
 
-    tmp.copyTo(this->camera_2->_LUTsphere);
+    tmp.convertTo(this->camera_2->_LUTsphere,CV_32F);
 }
 
 void OmniCamera::Rotate90roll()
 {
     cv::Mat Rot90roll = cv::Mat::eye(3,3,CV_32FC1);
 
-    Rot90roll.at<float>(2,2) =  cos( 90 * (pi/180) ); //roll
-    Rot90roll.at<float>(2,3) = -sin( 90 * (pi/180) );
-    Rot90roll.at<float>(3,2) =  sin( 90 * (pi/180) );
-    Rot90roll.at<float>(3,3) =  cos( 90 * (pi/180) );
+    float angle = -90.0;
+
+    Rot90roll.at<float>(1,1) =  cos( angle * (mypi/180.0) ); //roll
+    Rot90roll.at<float>(1,2) = -sin( angle * (mypi/180.0) );
+    Rot90roll.at<float>(2,1) =  sin( angle * (mypi/180.0) );
+    Rot90roll.at<float>(2,2) =  cos( angle * (mypi/180.0) );
 
     cv::Mat tmp = Rot90roll * this->_LUTsphere;
 
-    tmp.copyTo(this->_LUTsphere);
+    tmp.convertTo(this->_LUTsphere,CV_32F); // in theorz could be removed
 }
 
-void OmniCamera::MessRGBSph(sensor_msgs::PointCloud &PointCloud, int sampling, bool OFF)
-{
+void OmniCamera::PartiallyFillMess(sensor_msgs::PointCloud &PointCloud){
+
     if (!this->IsInit()) return;
 
     if (this->_LUTsphere.empty())
     {
+
         if (this->camera_1->_LUTsphere.empty())
         {
-            this->camera_1->Im2Sph(this->camera_1->_Frame.rows,this->camera_1->_Frame.cols);
+            this->camera_1->Im2Sph(this->camera_1->_cameraParam.imSize.rows ,this->camera_1->_cameraParam.imSize.cols);
         }
+
         if (this->camera_2->_LUTsphere.empty())
         {
-            this->camera_2->Im2Sph(this->camera_2->_Frame.rows,this->camera_2->_Frame.cols);
+            this->camera_2->Im2Sph(this->camera_2->_cameraParam.imSize.rows,this->camera_2->_cameraParam.imSize.cols);
         }
 
         this->ApplyBaseline();
@@ -327,10 +343,6 @@ void OmniCamera::MessRGBSph(sensor_msgs::PointCloud &PointCloud, int sampling, b
     }
 
     if (this->_LUTsphere.empty()) return;
-
-    ros::Time timeStamp = ros::Time::now();
-
-    PointCloud.header.stamp = timeStamp;
 
 //    PointCloud.header.frame_id = "head_1_link";
     PointCloud.header.frame_id = "base_link";
@@ -352,7 +364,56 @@ void OmniCamera::MessRGBSph(sensor_msgs::PointCloud &PointCloud, int sampling, b
 
     int pix_im1 = this->camera_1->_cameraParam.imSize.cols * this->camera_1->_cameraParam.imSize.rows;
 
+    cv::Mat mask = this->camera_1->_Mask;
+
+    const uchar *ptr_mask;
+    ptr_mask = mask.ptr<uchar>(row_ind) + col_ind;
+
+    for (int i = 0; i<this->_LUTsphere.cols; i++)
+    {
+        if (*ptr_mask > 0 && (i%this->_RGBSphSamp)==0)
+        {
+            PointCloud.points[i].x = this->_LUTsphere.at<float>(0,i) ;
+            PointCloud.points[i].y = this->_LUTsphere.at<float>(1,i) ;
+            PointCloud.points[i].z = this->_LUTsphere.at<float>(2,i) ;
+        }
+
+        row_ind++;
+
+        if (row_ind == this->camera_1->_cameraParam.imSize.rows)
+        {
+            row_ind = 0;
+            col_ind++;
+        }
+
+        if (i == pix_im1-1)
+        {
+            mask = this->camera_2->_Mask;
+            row_ind = 0;
+            col_ind = 0;
+        }
+
+        ptr_mask = mask.ptr<uchar>(row_ind) + col_ind;
+    }
+}
+
+void OmniCamera::MessRGBSph(sensor_msgs::PointCloud &PointCloud)
+{
+    if (!this->IsInit()) return;
+
+    if (this->_LUTsphere.empty()) return;
+
+    ros::Time timeStamp = ros::Time::now();
+
+    PointCloud.header.stamp = timeStamp;
+
+    int row_ind = 0;
+    int col_ind = 0;
+
+    int pix_im1 = this->camera_1->_cameraParam.imSize.cols * this->camera_1->_cameraParam.imSize.rows;
+
     cv::Mat im_val;
+
     this->camera_1->_Frame.convertTo(im_val,CV_32FC3);
     cv::Mat mask = this->camera_1->_Mask;
 
@@ -362,52 +423,33 @@ void OmniCamera::MessRGBSph(sensor_msgs::PointCloud &PointCloud, int sampling, b
     const uchar *ptr_mask;
     ptr_mask = mask.ptr<uchar>(row_ind) + col_ind;
 
-    FILE * pfile;
+    //std::cout << "before loop mess : "<<(this->_LUTsphere.cols / this->_RGBSphSamp)<<std::endl;
 
-    if (OFF)
-    {
-        pfile = fopen("./sphereRGB.OFF","w");
-
-        fprintf(pfile,"%s\n","COFF");
-        fprintf(pfile,"%i",this->_LUTsphere.cols-1);
-        fprintf(pfile," %s\n","0 0");
-    }
-
-    for (int i = 0; i<this->_LUTsphere.cols; i += sampling)
+    for (int i = 0; i<(this->_LUTsphere.cols); i++)
     {
 
         if (*ptr_mask > 0)
         {
-            PointCloud.points[i].x = this->_LUTsphere.at<float>(0,i) ;
-            PointCloud.points[i].y = this->_LUTsphere.at<float>(1,i) ;
-            PointCloud.points[i].z = this->_LUTsphere.at<float>(2,i) ;
-
-            PointCloud.channels[0].values[i] = (*ptr_pix)[2]/255.0; //r
-            PointCloud.channels[1].values[i] = (*ptr_pix)[1]/255.0; //g
-            PointCloud.channels[2].values[i] = (*ptr_pix)[0]/255.0; //b
-
-//            std::cout<<"full : "<<*ptr_pix <<std::endl;
-//            std::cout<<"B : "<<(*ptr_pix)[0]/255.0 <<std::endl;
-//            std::cout<<"G : "<<(*ptr_pix)[1]/255.0 <<std::endl;
-//            std::cout<<"R : "<<(*ptr_pix)[2]/255.0 <<std::endl;
-
-            if (OFF){
-                fprintf(pfile,"%f %f %f %i %i %i\n",PointCloud.points[i].x,PointCloud.points[i].y,PointCloud.points[i].z,
-                        this->_LUTsphere.at<uchar>(2,i),this->_LUTsphere.at<uchar>(1,i),this->_LUTsphere.at<uchar>(0,i));
-            }
+            PointCloud.channels[0].values[i] = ((*ptr_pix)[2])/255.0; //r
+            PointCloud.channels[1].values[i] = ((*ptr_pix)[1])/255.0; //g
+            PointCloud.channels[2].values[i] = ((*ptr_pix)[0])/255.0; //b
         }
 
         row_ind++;
 
-        if (row_ind == im_val.rows)
+        if (row_ind == this->camera_1->_cameraParam.imSize.rows)
         {
             row_ind = 0;
             col_ind++;
         }
 
-        if (i == pix_im1-1)
+//        std::cout << " loop : "<<i<<std::endl;
+
+        if (i == (pix_im1-1))
         {
-            this->camera_2->_Frame.convertTo(im_val,CV_32FC3); ;
+            this->camera_2->_Frame.convertTo(im_val,CV_32FC3);
+            //this->camera_2->_Frame.row(i)
+            //ROS_INFO_STREAM("[" << this->camera_2->_Frame.rows << "," << this->camera_2->_Frame.cols << "]");
             mask = this->camera_2->_Mask;
             row_ind = 0;
             col_ind = 0;
@@ -417,10 +459,7 @@ void OmniCamera::MessRGBSph(sensor_msgs::PointCloud &PointCloud, int sampling, b
         ptr_mask = mask.ptr<uchar>(row_ind) + col_ind;
     }
 
-    if (OFF)
-    {
-        fclose(pfile);
-    }
+    std::cout << "after loop mess : "<<std::endl;
 }
 
 

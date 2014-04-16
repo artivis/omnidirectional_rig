@@ -307,33 +307,31 @@ void FishEye::Im2Sph(int rows,int cols){
                 pts.at<float>(0) = (float)col;
                 pts.at<float>(1) = (float)row;
 
-                //            std::cout << "pts : "<< pts<<std::endl;
+//                            std::cout << "pts : "<< pts<<std::endl;
 
                 pts = inv_K * pts;
 
-                //            std::cout << "K pts : "<< pts<<std::endl;
+//                            std::cout << "K pts : "<< pts<<std::endl;
 
-                tmp = std::sqrt( std::complex<float>(pts.at<float>(2)*pts.at<float>(2) + (1-this->_cameraParam.xi*this->_cameraParam.xi)*
-                                                     (pts.at<float>(0)*pts.at<float>(0) + pts.at<float>(1)*pts.at<float>(1))) );
+                tmp = std::sqrt( std::complex<float>(pts.at<float>(2) * pts.at<float>(2) + (1 - this->_cameraParam.xi * this->_cameraParam.xi) *
+                                                     (pts.at<float>(0) * pts.at<float>(0) + pts.at<float>(1) * pts.at<float>(1))) );
 
-                alpha = (this->_cameraParam.xi * pts.at<float>(2) + tmp.real()) / cv::norm(pts);
-
-
-                //            std::cout << "before comp conv : "<< pts.at<float>(2)*pts.at<float>(2) + (1-this->_cameraParam.xi*this->_cameraParam.xi)*
-                //                                        (pts.at<float>(0)*pts.at<float>(0) + pts.at<float>(1)*pts.at<float>(1)) <<std::endl;
-
-                //            std::cout << "after comp conv : "<< std::complex<float>(pts.at<float>(2)*pts.at<float>(2) + (1-this->_cameraParam.xi*this->_cameraParam.xi)*
-                //                                                                    (pts.at<float>(0)*pts.at<float>(0) + pts.at<float>(1)*pts.at<float>(1))) <<std::endl;
-
-                //            std::cout << "tmp : "<< tmp <<std::endl;
-                //            std::cout << "tmp real : "<< tmp.real() <<std::endl;
+                alpha = (this->_cameraParam.xi * pts.at<float>(2) + (float)tmp.real())
+                        / (pts.at<float>(0) * pts.at<float>(0) + pts.at<float>(1) * pts.at<float>(1) + pts.at<float>(2) * pts.at<float>(2));
 
 
-                //            std::cout << "alpha : "<< alpha<<std::endl;
+//                            std::cout << "comp conv : "<< std::complex<float>(pts.at<float>(2) * pts.at<float>(2) + (1 - this->_cameraParam.xi * this->_cameraParam.xi) *
+//                                                                                    (pts.at<float>(0) * pts.at<float>(0) + pts.at<float>(1) * pts.at<float>(1))) <<std::endl;
 
-                this->_LUTsphere.at<float>(0,i) =  pts.at<float>(0) * alpha;
-                this->_LUTsphere.at<float>(1,i) =  pts.at<float>(1) * alpha;
-                this->_LUTsphere.at<float>(2,i) = (pts.at<float>(2) - this->_cameraParam.xi) * alpha; //check alpha*(Z-xi) or alpha*Z-xi
+//                            std::cout << "tmp : "<< tmp <<std::endl;
+//                            std::cout << "tmp real : "<< (float)tmp.real() <<std::endl;
+
+
+//                            std::cout << "alpha : "<< alpha<<std::endl;
+
+                this->_LUTsphere.at<float>(0,i) = pts.at<float>(0) * alpha;
+                this->_LUTsphere.at<float>(1,i) = pts.at<float>(1) * alpha;
+                this->_LUTsphere.at<float>(2,i) = pts.at<float>(2) * alpha - this->_cameraParam.xi;
             }
             i++;
         }

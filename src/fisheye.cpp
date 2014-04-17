@@ -7,6 +7,9 @@ FishEye::FishEye(const std::string &topicsName, const std::string &paramPath)
 
     this->_init = this->_loadParam(paramPath);
 
+    _isSampled = false;
+
+    _sampling_ratio = 1;
 }
 
 FishEye::FishEye(const std::string &topicsName, const std::string &paramPath, const std::string &LUTSphPath)
@@ -17,6 +20,9 @@ FishEye::FishEye(const std::string &topicsName, const std::string &paramPath, co
 
     this->LoadLUT(LUTSphPath,"sphere");
 
+    _isSampled = false;
+
+    _sampling_ratio = 1;
 }
 
 
@@ -76,6 +82,10 @@ std::vector<int> FishEye::GetImageSize(){
     return tmp;
 }
 
+bool FishEye::IsSampled(){
+    return this->_isSampled;
+}
+
 cv::Mat FishEye::GetLUT(){
     return this->_LUTsphere;
 }
@@ -126,6 +136,8 @@ void FishEye::ReadFrame(){
     cvPtr = cv_bridge::toCvCopy(frame,"8UC3");
 
     this->_Frame = cvPtr->image;
+
+    if(this->_isSampled) cv::resize(this->_Frame,this->_Frame,cv::Size(),1.0/this->_sampling_ratio,1.0/this->_sampling_ratio);
 }
 
 cv::Mat FishEye::getImage(){
@@ -369,6 +381,29 @@ cv::Vec3f FishEye::Pix2Sph(int ind_row, int ind_col)
 
 
 
+void FishEye::DownSample(int sampling_ratio)
+{
 
+    if (!this->IsInit()) return;
+
+    this->_cameraParam.imSize.cols /= sampling_ratio;
+    this->_cameraParam.imSize.rows /= sampling_ratio;
+
+    this->_cameraParam.intrinParam /= sampling_ratio;
+    this->_cameraParam.intrinParam.at<float>(2,2) = 1;
+
+    if (!this->_Frame.empty()) cv::resize(this->_Frame,this->_Frame,cv::Size(),1.0/sampling_ratio,1.0/sampling_ratio);
+
+    if (!this->_Mask.empty()) cv::resize(this->_Mask,this->_Mask,cv::Size(),1.0/sampling_ratio,1.0/sampling_ratio);
+
+    if (!this->_LUTsphere.empty()) this->Im2Sph(this->_cameraParam.imSize.rows,this->_cameraParam.imSize.cols);
+
+    this->_isSampled = true;
+
+    this->_sampling_ratio = sampling_ratio;
+
+//    if (!this->_LUT_wrap_im.empty()) this->_LUT_wrap_im.
+
+}
 
 

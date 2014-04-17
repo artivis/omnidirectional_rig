@@ -60,6 +60,7 @@ public:
     cv::Mat GetLUT(const std::string &);
     cv::Mat GetMask();
     cv::Mat getImage();
+    bool IsSampled();
 
     bool IsInit();
 
@@ -79,7 +80,6 @@ public:
     void LoadMask(const std::string&);
 
     bool LoadLUT(const std::string&,const std::string&);
-//    void CompLUT(const std::string&);
 
     void readImage(std::string file);
 
@@ -87,6 +87,7 @@ public:
     void Im2Sph(int rows = 1024,int cols = 1280);
     cv::Vec3f Pix2Sph(int ind_row, int ind_col);
 
+    void DownSample(int);
 
 
 
@@ -104,6 +105,9 @@ public:
     cv::Mat _Frame;
 
     bool _loadParam(const std::string &paramPath);
+
+    bool _isSampled;
+    int _sampling_ratio;
 
 
 };

@@ -110,9 +110,7 @@ int main(int argc, char** argv){
 
     double time;
 
-    omniSys.SetRGBSphSamp(1);
-
-    omniSys.PartiallyFillMess(ptsCld);
+       omniSys.PartiallyFillMess(ptsCld);
 
     std::cout<<" mess : "<<ptsCld.points.size()<<std::endl;
 

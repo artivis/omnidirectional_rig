@@ -25,13 +25,7 @@ class OmniCamera {
         OmniCamera(const std::vector<std::string> &topicsName, const std::vector<std::string> &cameraParamPath,
                    const std::string &extrinPath);
 
-//        OmniCamera(const std::vector<std::string> &topicsName, const std::vector<std::string> &cameraParamPath,
-//                   const std::string &extrinPath, const std::vector<std::string> &LUTpath,
-//                   const std::vector<std::string> &LUTtype = std::vector<std::string>);
-
         ~OmniCamera();
-
-        //void InitCamera(int cameraNum, const std::string &topicName, const std::string &paramPath);
 
         bool LoadCalibration(const std::string&);
 
@@ -65,11 +59,9 @@ class OmniCamera {
 
         cv::Mat GetLUT();
 
-        int GetRGBSphSamp();
-
         void SetExtrin(const cv::Mat &);
 
-        void SetRGBSphSamp(int);
+        void DownSample(int);
 
     private :
 
@@ -84,8 +76,8 @@ class OmniCamera {
         cv::Mat _LUTsphere;
         cv::Mat _LUT_wrap_im;
 
-        int _RGBSphSamp;
-
+        bool _isSampled;
+        int _sampling_ratio;
 };
 
 

@@ -113,9 +113,21 @@ add_executable(omni_localization_node
                            src/feature_extractor.cpp
                            src/fisheye.cpp
                            src/usefull.cpp
+
+)
+target_link_libraries(omni_localization_node
+   ${catkin_LIBRARIES}
 )
 
-target_link_libraries(omni_localization_node
+add_executable(demo_omni_oculus
+                           src/image_handler.cpp
+                           src/Demo_Omni_Oculus.cpp
+                           src/omni_camera.cpp
+                           src/fisheye.cpp
+                           src/usefull.cpp
+
+)
+target_link_libraries(demo_omni_oculus
    ${catkin_LIBRARIES}
 )
 

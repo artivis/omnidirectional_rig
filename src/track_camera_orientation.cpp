@@ -8,14 +8,14 @@
 #include <string>
 
 
-int main(int argc = 4, char** argv = NULL){
+int main(int argc, char** argv = NULL){
 
-    ros::init(argc,argv, "demo_omni_oculus");
+    ros::init(argc,argv, "track_camera_orientation");
 
-    const std::string cloudPtTopic = "/cloud_sphere";
-    ros::NodeHandle nh;
+//    const std::string cloudPtTopic = "/cloud_sphere";
+//    ros::NodeHandle nh;
 
-    ros::Publisher pub_CloudSph = nh.advertise<sensor_msgs::PointCloud>(cloudPtTopic,0);
+//    ros::Publisher pub_CloudSph = nh.advertise<sensor_msgs::PointCloud>(cloudPtTopic,0);
 
     std::vector<std::string> path_yamls_cam;
     std::vector<std::string> topics_name;
@@ -41,41 +41,30 @@ int main(int argc = 4, char** argv = NULL){
     omniSys.camera_1->LoadMask(maskCamera_1);
     omniSys.camera_2->LoadMask(maskCamera_2);
 
-    omniSys.DownSample(argc);
-
-    omniSys.DispParam();
-
-    sensor_msgs::PointCloud ptsCld;
-
     double time;
-    char exit;
 
-    omniSys.PartiallyFillMess(ptsCld);
+    cv::Mat SampSph_cam1;
+    cv::Mat SampSph_cam2;
+
+    int bandwidth = 64;
+
+    GetHemiSphSampGrid(SampSph_cam1,bandwidth);
+    GetHemiSphSampGrid(SampSph_cam2,bandwidth);
 
     do
     {
+        time = (double)cv::getTickCount();
+
         omniSys.camera_1->ReadFrame();
         omniSys.camera_2->ReadFrame();
 
-        time = (double)cv::getTickCount();
-
-        omniSys.MessRGBSph(ptsCld);
-
-        std::cout << "time to comp sphere : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
-
-        time = (double)cv::getTickCount();
-
-        pub_CloudSph.publish(ptsCld);
-
         std::cout << "time to publish sphere : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
+
+
 
         ros::spinOnce();
 
-        exit = cv::waitKey(10);
-
-        if(exit == 27) break;
-
-    }while(true);
+    }while(cv::waitKey(10) != 'q');
 
     return 0;
 }

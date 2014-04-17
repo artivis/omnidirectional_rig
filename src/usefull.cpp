@@ -84,7 +84,7 @@ void GetSphSampGrid(int bandwidth, cv::Mat &pts, bool ishemi){
 }
 
 
-void GetHemiSphSampGrid(int bandwidth, cv::Mat &pts){
+void GetHemiSphSampGrid(cv::Mat &pts,int bandwidth){
 
     GetSphSampGrid(bandwidth, pts, true);
 

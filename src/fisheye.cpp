@@ -277,6 +277,8 @@ bool FishEye::LoadLUT(const std::string& filename, const std::string &LUT)
 
 void FishEye::LoadMask(const std::string& maskFile){
 
+    if (maskFile.empty()) return;
+
     cv::Mat tmp;
 
     tmp = cv::imread(maskFile,CV_LOAD_IMAGE_GRAYSCALE);
@@ -407,3 +409,7 @@ void FishEye::DownSample(int sampling_ratio)
 }
 
 
+void FishEye::Sph2Im(const cv::Mat &sphPoints)
+{
+
+}

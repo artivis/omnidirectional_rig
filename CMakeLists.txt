@@ -131,6 +131,18 @@ target_link_libraries(demo_omni_oculus
    ${catkin_LIBRARIES}
 )
 
+add_executable(track_camera_orientation
+                           src/image_handler.cpp
+                           src/track_camera_orientation.cpp
+                           src/omni_camera.cpp
+                           src/fisheye.cpp
+                           src/usefull.cpp
+
+)
+target_link_libraries(track_camera_orientation
+   ${catkin_LIBRARIES}
+)
+
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(omni_localization_node omni_localization_generate_messages_cpp)

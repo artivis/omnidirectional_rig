@@ -7,7 +7,6 @@
 #include <opencv2/core/core.hpp>
 
 
-
 const double mypi = 3.141592653589793238462643383279;
 
 
@@ -31,7 +30,7 @@ void Sph2Cart(const cv::Mat&, cv::Mat &);
 
 void GetSphSampGrid(int bandwidth, cv::Mat &pts, bool ishemi = false);
 
-void GetHemiSphSampGrid(int bandwidth, cv::Mat &pts);
+void GetHemiSphSampGrid(cv::Mat &pts,int bandwidth);
 
 void MeshGrid(const cv::Mat&, const cv::Mat&, cv::Mat&, cv::Mat&);
 

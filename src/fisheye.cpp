@@ -432,6 +432,29 @@ void FishEye::Sph2Im(const cv::Mat &sphPoints)
     }
 }
 
+void FishEye::Sph2Im(const cv::Mat &sphPts,cv::Mat &imPts)
+{
+    if (!this->IsInit() || sphPts.empty()) return;
+
+    //if (sphPts.rows == 2) Sph2Cart(sphPts,sphPts);
+
+    imPts = cv::Mat::zeros(2,sphPts.cols,CV_32S);
+
+    int row,col;
+
+    for (int i = 0; i < sphPts.cols; i++)
+    {
+        col = (int)((sphPts.at<float>(0,i) * this->_cameraParam.intrinParam.at<float>(0,0)) /
+              (sphPts.at<float>(2,i) + this->_cameraParam.xi) + this->_cameraParam.intrinParam.at<float>(0,2));
+
+        row = (int)((sphPts.at<float>(1,i) * this->_cameraParam.intrinParam.at<float>(1,1)) /
+                (sphPts.at<float>(2,i) + this->_cameraParam.xi) + this->_cameraParam.intrinParam.at<float>(1,2));
+
+        imPts.at<int>(0,i) = row;
+        imPts.at<int>(1,i) = col;
+    }
+}
+
 cv::Vec3f FishEye::Sph2Im(float th, float phi)
 {
 

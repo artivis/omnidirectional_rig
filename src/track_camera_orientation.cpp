@@ -19,12 +19,17 @@ int main(int argc, char** argv){
 
     std::vector<std::string> path_yamls_cam;
     std::vector<std::string> topics_name;
+    std::string im_cam1;
+    std::string im_cam2;
     std::string maskCamera_1;
     std::string maskCamera_2;
     std::string extrinParam;
 
     path_yamls_cam.push_back("etc/calib/Pal_intrinsicParam_cam1.yaml");
     path_yamls_cam.push_back("etc/calib/Pal_intrinsicParam_cam2.yaml");
+
+    im_cam1 = "etc/images/left_frame0000.jpg";
+    im_cam2 = "etc/images/right_frame0000.jpg";
 
     maskCamera_1  = "etc/images/cam1/Img_mask1.jpg";
     maskCamera_2  = "etc/images/cam2/Img_mask2.jpg";
@@ -38,32 +43,17 @@ int main(int argc, char** argv){
 
     omniSys.DispParam();
 
+    omniSys.camera_1->readImage(im_cam1);
+    omniSys.camera_2->readImage(im_cam2);
+
     omniSys.camera_1->LoadMask(maskCamera_1);
     omniSys.camera_2->LoadMask(maskCamera_2);
 
     double time;
 
-    cv::Mat cartPtsCam1;
-    cv::Mat cartPtsCam2;
+    omniSys.SphHarSample(8);
 
-    cv::Mat sphGrid;
-
-    int bandwidth = 64;
-
-    GetSphSampGrid(bandwidth,sphGrid);
-
-    cv::MatIterator_<float> mat_it = sphGrid.begin<float>();
-
-    int ind = 0;
-
-    do
-    {
-        mat_it++;
-        ind++;
-    }while(*mat_it < (mypi/2));
-
-
-
+    std::cout << "SphIm grid : " <<omniSys._LUTsph_im<<std::endl;
 
     do
     {

@@ -421,3 +421,100 @@ void OmniCamera::DownSample(int sampling_ratio)
     this->_sampling_ratio = sampling_ratio;
 }
 
+void OmniCamera::GetSphSampGrid(int bandwidth, cv::Mat &pts, bool ishemi){
+
+    cv::Mat theta = cv::Mat::zeros(1,2*bandwidth,CV_32FC1);
+    cv::Mat phi = cv::Mat::zeros(1,2*bandwidth,CV_32FC1);
+
+    cv::Mat theta_grid, phi_grid;
+
+    cv::MatIterator_<float> it_theta = theta.begin<float>(), it_theta_end = theta.end<float>(),
+            it_phi = phi.begin<float>();
+
+    int i = 0;
+
+    int hemi = (ishemi) ? 1 : 2;
+
+    for (;it_theta!=it_theta_end;it_theta++)
+    {
+        *it_theta = mypi*(hemi*i+1) / (4*bandwidth);
+
+        *it_phi = mypi*i / (bandwidth);
+
+        it_phi++;
+        i++;
+    }
+
+    MeshGrid(theta,phi,theta_grid,phi_grid);
+
+    cv::Mat tmp = theta_grid.t();
+
+    tmp.reshape(1,1).copyTo(theta_grid);
+
+    tmp = phi_grid.t();
+
+    tmp.reshape(1,1).copyTo(phi_grid);
+
+    cv::vconcat(theta_grid,phi_grid,pts);
+}
+
+
+void OmniCamera::GetHemiSphSampGrid(cv::Mat &pts,int bandwidth){
+
+    GetSphSampGrid(bandwidth, pts, true);
+
+}
+
+
+void OmniCamera::SphHarSample(int bandwidth)
+{
+    if (!this->IsInit()) return;
+    if (this->camera_1->_Frame.empty() || this->camera_2->_Frame.empty()) return;
+
+    cv::Mat sphGrid;
+    cv::Mat imGrid;
+    cv::Mat subMatSph;
+    cv::Mat subMatIm;
+
+    this->GetSphSampGrid(bandwidth,sphGrid);
+
+    std::cout << "sph grid size : "<<sphGrid.rows<<" "<<sphGrid.cols<<std::endl;
+    std::cout << "sph grid : "<<sphGrid<<std::endl;
+
+    cv::MatIterator_<float> mat_it = sphGrid.begin<float>();
+
+    int ind = 0;
+
+    do
+    {
+        mat_it++;
+        ind++;
+    }while(*mat_it < (mypi/2));
+
+    mat_it = sphGrid.end<float>();
+
+    imGrid = cv::Mat::zeros(2,sphGrid.cols,CV_32S);
+
+    cv::Mat tmp;
+
+    Sph2Cart(sphGrid,tmp);
+    tmp.copyTo(sphGrid);
+    tmp.release();
+
+    std::cout << "sph grid size : "<<sphGrid.rows<<" "<<sphGrid.cols<<std::endl;
+    std::cout << "sph grid : "<<sphGrid<<std::endl;
+
+    subMatSph = sphGrid(cv::Rect(0,0,ind,3));
+    subMatIm = imGrid(cv::Rect(0,0,ind,2));
+
+    this->camera_1->Sph2Im(subMatSph,subMatIm);
+
+    subMatSph = sphGrid(cv::Rect(ind,0,sphGrid.cols-ind,3));
+    subMatIm = imGrid(cv::Rect(ind,0,sphGrid.cols-ind,2));
+
+    RotateCloudPoint(subMatSph,0,180,0);
+
+    this->camera_2->Sph2Im(subMatSph,subMatIm);
+
+    imGrid.convertTo(this->_LUTsph_im,CV_32F);
+}

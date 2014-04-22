@@ -61,9 +61,15 @@ class OmniCamera {
 
         void SetExtrin(const cv::Mat &);
 
-        void DownSample(int);
+        void DownSample(int sampling_ratio = 1);
 
-    private :
+        void SphHarSample(int bandwidth = 64);
+
+        void GetSphSampGrid(int bandwidth, cv::Mat &pts, bool ishemi = false);
+
+        void GetHemiSphSampGrid(cv::Mat &pts,int bandwidth);
+
+//    private :
 
         cv::Mat _extrin;
 
@@ -75,6 +81,7 @@ class OmniCamera {
 
         cv::Mat _LUTsphere;
         cv::Mat _LUT_wrap_im;
+        cv::Mat _LUTsph_im;
 
         bool _isSampled;
         int _sampling_ratio;

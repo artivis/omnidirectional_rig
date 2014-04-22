@@ -8,7 +8,7 @@
 #include <string>
 
 
-int main(int argc, char** argv = NULL){
+int main(int argc, char** argv){
 
     ros::init(argc,argv, "track_camera_orientation");
 
@@ -43,13 +43,27 @@ int main(int argc, char** argv = NULL){
 
     double time;
 
-    cv::Mat SampSph_cam1;
-    cv::Mat SampSph_cam2;
+    cv::Mat cartPtsCam1;
+    cv::Mat cartPtsCam2;
+
+    cv::Mat sphGrid;
 
     int bandwidth = 64;
 
-    GetHemiSphSampGrid(SampSph_cam1,bandwidth);
-    GetHemiSphSampGrid(SampSph_cam2,bandwidth);
+    GetSphSampGrid(bandwidth,sphGrid);
+
+    cv::MatIterator_<float> mat_it = sphGrid.begin<float>();
+
+    int ind = 0;
+
+    do
+    {
+        mat_it++;
+        ind++;
+    }while(*mat_it < (mypi/2));
+
+
+
 
     do
     {

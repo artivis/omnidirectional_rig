@@ -34,4 +34,8 @@ void GetHemiSphSampGrid(cv::Mat &pts,int bandwidth);
 
 void MeshGrid(const cv::Mat&, const cv::Mat&, cv::Mat&, cv::Mat&);
 
+
+
+std::string AddPath(const std::string& obj, const std::string& root);
+
 #endif // USEFULL_H

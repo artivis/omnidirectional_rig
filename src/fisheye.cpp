@@ -411,5 +411,28 @@ void FishEye::DownSample(int sampling_ratio)
 
 void FishEye::Sph2Im(const cv::Mat &sphPoints)
 {
+    if (!this->IsInit() || sphPoints.empty()) return;
+
+    //if (sphPoints.rows == 2) Sph2Cart(sphPoints,sphPoints);
+
+    this->_LUT_sampSph_im = cv::Mat::zeros(2,sphPoints.cols,CV_8U);
+
+    int row,col;
+
+    for (int i = 0; i < sphPoints.cols; i++)
+    {
+        col = (int)((sphPoints.at<float>(0,i) * this->_cameraParam.intrinParam.at<float>(0,0)) /
+              (sphPoints.at<float>(2,i) + this->_cameraParam.xi) + this->_cameraParam.intrinParam.at<float>(0,2));
+
+        row = (int)((sphPoints.at<float>(1,i) * this->_cameraParam.intrinParam.at<float>(1,1)) /
+                (sphPoints.at<float>(2,i) + this->_cameraParam.xi) + this->_cameraParam.intrinParam.at<float>(1,2));
+
+        this->_LUT_sampSph_im.at<int>(0,i) = row;
+        this->_LUT_sampSph_im.at<int>(1,i) = col;
+    }
+}
+
+cv::Vec3f FishEye::Sph2Im(float th, float phi)
+{
 
 }

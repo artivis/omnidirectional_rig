@@ -88,6 +88,7 @@ public:
     cv::Vec3f Pix2Sph(int ind_row, int ind_col);
 
     void Sph2Im(const cv::Mat&);
+    cv::Vec3f Sph2Im(float th, float phi);
 
     void DownSample(int);
 
@@ -102,6 +103,7 @@ public:
 
     cv::Mat _LUTsphere;
     cv::Mat _LUT_wrap_im;
+    cv::Mat _LUT_sampSph_im;
 
     cv::Mat _Mask;
     cv::Mat _Frame;

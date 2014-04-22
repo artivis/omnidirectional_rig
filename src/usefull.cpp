@@ -104,7 +104,7 @@ void Sph2Cart(const cv::Mat &sph_pts, cv::Mat &cart_pts)
     const float *ptr_theta = sph_pts.ptr<float>(0);
     const float *ptr_phi = sph_pts.ptr<float>(1);
 
-    cart_pts = cv::Mat::zeros(3,sph_pts.cols,CV_32FC1);
+    cv:: Mat cart_pts_tmp = cv::Mat::zeros(3,sph_pts.cols,CV_32FC1);
 
     float *ptr_x = cart_pts.ptr<float>(0);
     float *ptr_y = cart_pts.ptr<float>(1);
@@ -152,7 +152,13 @@ void Sph2Cart(const cv::Mat &sph_pts, cv::Mat &cart_pts)
     }else{
         return;
     }
+
+    cart_pts_tmp.copyTo(cart_pts);
 }
 
-
-
+std::string AddPath(const std::string &obj, const std::string &root)
+{
+    std::stringstream ss;
+            ss << root << "/" << obj;
+            return ss.str();
+}

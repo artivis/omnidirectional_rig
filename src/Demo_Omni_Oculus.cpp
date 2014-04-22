@@ -8,14 +8,17 @@
 #include <string>
 
 
-int main(int argc = 4, char** argv = NULL){
+int main(int argc, char** argv){
+
+    if (argc != 2) return -1;
+    if (argv == NULL) return -1;
+
+    int sampling_ratio = atof(argv[1]);
+    std::string conf_path = argv[2]; //TODO check nb arg & val
 
     ros::init(argc,argv, "demo_omni_oculus");
 
-    const std::string cloudPtTopic = "/cloud_sphere";
     ros::NodeHandle nh;
-
-    ros::Publisher pub_CloudSph = nh.advertise<sensor_msgs::PointCloud>(cloudPtTopic,0);
 
     std::vector<std::string> path_yamls_cam;
     std::vector<std::string> topics_name;
@@ -23,16 +26,20 @@ int main(int argc = 4, char** argv = NULL){
     std::string maskCamera_2;
     std::string extrinParam;
 
-    path_yamls_cam.push_back("etc/calib/Pal_intrinsicParam_cam1.yaml");
-    path_yamls_cam.push_back("etc/calib/Pal_intrinsicParam_cam2.yaml");
+    const std::string cloudPtTopic = "/cloud_sphere";
 
-    maskCamera_1  = "etc/images/cam1/Img_mask1.jpg";
-    maskCamera_2  = "etc/images/cam2/Img_mask2.jpg";
+    ros::Publisher pub_CloudSph = nh.advertise<sensor_msgs::PointCloud>(cloudPtTopic,0);
+
+    path_yamls_cam.push_back(AddPath("etc/calib/Pal_intrinsicParam_cam1.yaml",conf_path));
+    path_yamls_cam.push_back(AddPath("etc/calib/Pal_intrinsicParam_cam2.yaml",conf_path));
+
+    extrinParam = AddPath("etc/calib/Pal_extrinsicParam.yaml",conf_path);
+
+    maskCamera_1  = AddPath("etc/images/cam1/Img_mask1.jpg",conf_path);
+    maskCamera_2  = AddPath("etc/images/cam2/Img_mask2.jpg",conf_path);
 
     topics_name.push_back("/left/image_raw");
     topics_name.push_back("/right/image_raw");
-
-    extrinParam = "etc/calib/Pal_extrinsicParam.yaml";
 
     OmniCamera omniSys(topics_name,path_yamls_cam,extrinParam);
 
@@ -41,7 +48,7 @@ int main(int argc = 4, char** argv = NULL){
     omniSys.camera_1->LoadMask(maskCamera_1);
     omniSys.camera_2->LoadMask(maskCamera_2);
 
-    omniSys.DownSample(argc);
+    omniSys.DownSample(sampling_ratio);
 
     omniSys.DispParam();
 
@@ -61,13 +68,13 @@ int main(int argc = 4, char** argv = NULL){
 
         omniSys.MessRGBSph(ptsCld);
 
-        std::cout << "time to comp sphere : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
+        //std::cout << "time to comp sphere : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
 
         time = (double)cv::getTickCount();
 
         pub_CloudSph.publish(ptsCld);
 
-        std::cout << "time to publish sphere : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
+        //std::cout << "time to publish sphere : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
 
         ros::spinOnce();
 
@@ -75,7 +82,7 @@ int main(int argc = 4, char** argv = NULL){
 
         if(exit == 27) break;
 
-    }while(true);
+    }while(1);
 
     return 0;
 }

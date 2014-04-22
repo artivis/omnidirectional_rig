@@ -63,13 +63,15 @@ class OmniCamera {
 
         void DownSample(int sampling_ratio = 1);
 
-        void SphHarSample(int bandwidth = 64);
+        int CompLUTsampSph2Im(int bandwidth = 64);
+
+        void SampSphFct( cv::Mat&, int bandwidth = 64);
 
         void GetSphSampGrid(int bandwidth, cv::Mat &pts, bool ishemi = false);
 
         void GetHemiSphSampGrid(cv::Mat &pts,int bandwidth);
 
-//    private :
+    private :
 
         cv::Mat _extrin;
 

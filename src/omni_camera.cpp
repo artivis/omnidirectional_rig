@@ -27,7 +27,7 @@ OmniCamera::OmniCamera(const std::vector<std::string> &topicsName, const std::ve
 
     this->_panoSize = cv::Size(1200,400);
 
-    this->_init = true;
+    this->_init = this->camera_1->IsInit() && this->camera_2->IsInit() && true;
 
     this->_isSampled = false;
 
@@ -68,14 +68,18 @@ void OmniCamera::DispParam(){
 
     if(this->camera_1->IsInit()) {
         this->camera_1->DispParam();
+    }else{
+        std::cout<<"Camera 1 not initialized !!!"<<std::endl;
     }
 
     if(this->camera_2->IsInit()) {
         this->camera_2->DispParam();
+    }else{
+        std::cout<<"Camera 2 not initialized !!!"<<std::endl;
     }
 
     if(this->IsInit()) {
-        std::cout<<"system extrinsic parameters : \n" << this->GetExtrin()<<std::endl<<std::endl;
+        std::cout<<"system extrinsic parameters : \n" << this->GetExtrin() <<std::endl<<std::endl;
     }
 }
 
@@ -466,10 +470,9 @@ void OmniCamera::GetHemiSphSampGrid(cv::Mat &pts,int bandwidth){
 }
 
 
-void OmniCamera::SphHarSample(int bandwidth)
+int OmniCamera::CompLUTsampSph2Im(int bandwidth)
 {
-    if (!this->IsInit()) return;
-    if (this->camera_1->_Frame.empty() || this->camera_2->_Frame.empty()) return;
+    if (!this->IsInit()) return -1;
 
     cv::Mat sphGrid;
     cv::Mat imGrid;
@@ -478,8 +481,8 @@ void OmniCamera::SphHarSample(int bandwidth)
 
     this->GetSphSampGrid(bandwidth,sphGrid);
 
-    std::cout << "sph grid size : "<<sphGrid.rows<<" "<<sphGrid.cols<<std::endl;
-    std::cout << "sph grid : "<<sphGrid<<std::endl;
+//    std::cout << "sph grid size : "<<sphGrid.rows<<" "<<sphGrid.cols<<std::endl;
+//    std::cout << "sph grid : "<<sphGrid<<std::endl;
 
     cv::MatIterator_<float> mat_it = sphGrid.begin<float>();
 
@@ -501,9 +504,6 @@ void OmniCamera::SphHarSample(int bandwidth)
     tmp.copyTo(sphGrid);
     tmp.release();
 
-    std::cout << "sph grid size : "<<sphGrid.rows<<" "<<sphGrid.cols<<std::endl;
-    std::cout << "sph grid : "<<sphGrid<<std::endl;
-
     subMatSph = sphGrid(cv::Rect(0,0,ind,3));
     subMatIm = imGrid(cv::Rect(0,0,ind,2));
 
@@ -517,4 +517,44 @@ void OmniCamera::SphHarSample(int bandwidth)
     this->camera_2->Sph2Im(subMatSph,subMatIm);
 
     imGrid.convertTo(this->_LUTsph_im,CV_32F);
+
+    return ind;
 }
+
+
+void OmniCamera::SampSphFct(cv::Mat &sampFct, int bandwidth)
+{
+    if (!this->IsInit()) return;
+    if (this->camera_1->_Frame.empty() || this->camera_2->_Frame.empty()) return;
+
+    int ind = CompLUTsampSph2Im(bandwidth);
+
+    sampFct = cv::Mat::zeros(1,this->_LUTsph_im.cols*2,CV_8U);
+
+    cv::Mat grayIm;
+
+    if (this->camera_1->_Frame.channels() == 3)
+    {
+        cv::cvtColor(this->camera_1->_Frame,grayIm,CV_BGR2GRAY);
+    }else{
+        grayIm = this->camera_1->_Frame;
+    }
+
+    for (int i=0 ; i<this->_LUTsph_im.cols ; i++)
+    {
+
+        sampFct.at<uchar>(0,i) = grayIm.at<uchar>(this->_LUTsph_im.at<int>(0,i),this->_LUTsph_im.at<int>(1,i));
+
+        if (i == (ind-1))
+        {
+            if (this->camera_2->_Frame.channels() == 3)
+            {
+                cv::cvtColor(this->camera_2->_Frame,grayIm,CV_BGR2GRAY);
+            }else{
+                grayIm = this->camera_2->_Frame;
+            }
+        }
+    }
+}
+
+

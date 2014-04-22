@@ -42,8 +42,6 @@ bool FishEye::_loadParam(const std::string &paramPath)
         return false;
     }
 
-
-
     fs["type"] >> this->_cameraParam.cameraType;
     fs["xi"] >> this->_cameraParam.xi;
     fs["K"] >> this->_cameraParam.intrinParam;

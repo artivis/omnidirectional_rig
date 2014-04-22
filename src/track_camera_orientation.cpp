@@ -41,19 +41,27 @@ int main(int argc, char** argv){
 
     OmniCamera omniSys(topics_name,path_yamls_cam,extrinParam);
 
+    if (!omniSys.IsInit())
+    {
+        std::cout << "Omni System Not Init !"<<std::endl;
+        return 2;
+    }
+
     omniSys.DispParam();
 
-    omniSys.camera_1->readImage(im_cam1);
-    omniSys.camera_2->readImage(im_cam2);
+//    omniSys.camera_1->readImage(im_cam1);
+//    omniSys.camera_2->readImage(im_cam2);
 
     omniSys.camera_1->LoadMask(maskCamera_1);
     omniSys.camera_2->LoadMask(maskCamera_2);
 
     double time;
 
-    omniSys.SphHarSample(8);
+    cv::Mat sampSphFunc;
 
-    std::cout << "SphIm grid : " <<omniSys._LUTsph_im<<std::endl;
+    omniSys.SampSphFct(sampSphFunc,8);
+
+    return 1;
 
     do
     {
@@ -63,8 +71,6 @@ int main(int argc, char** argv){
         omniSys.camera_2->ReadFrame();
 
         std::cout << "time to publish sphere : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
-
-
 
         ros::spinOnce();
 

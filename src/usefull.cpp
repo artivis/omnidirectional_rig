@@ -43,54 +43,6 @@ void Cart2Sph(const cv::Mat& cart_coor, cv::Mat& sph_coor, int rad_flag )
 }
 
 
-
-
-//void GetSphSampGrid(int bandwidth, cv::Mat &pts, bool ishemi){
-
-//    cv::Mat theta = cv::Mat::zeros(1,bandwidth*bandwidth-1,CV_32FC1);
-//    cv::Mat phi = cv::Mat::zeros(1,bandwidth*bandwidth-1,CV_32FC1);
-
-//    cv::Mat theta_grid, phi_grid;
-
-//    cv::MatIterator_<float> it_theta = theta.begin<float>(), it_theta_end = theta.end<float>(),
-//            it_phi = phi.begin<float>();
-
-//    int i = 0;
-
-//    int hemi = (ishemi) ? 2 : 1;
-
-//    for (;it_theta!=it_theta_end;it_theta++)
-//    {
-//        *it_theta = mypi*(2*i+1) / (4*bandwidth);
-
-//        *it_phi = mypi*i / (hemi*bandwidth);
-
-//        it_phi++;
-//        i++;
-//    }
-
-//    MeshGrid(theta,phi,theta_grid,phi_grid);
-
-//    cv::Mat tmp = theta_grid.t();
-
-//    tmp.reshape(1,1).copyTo(theta_grid);
-
-//    tmp = phi_grid.t();
-
-//    tmp.reshape(1,1).copyTo(phi_grid);
-
-//    cv::vconcat(theta_grid,phi_grid,pts);
-
-//}
-
-
-//void GetHemiSphSampGrid(cv::Mat &pts,int bandwidth){
-
-//    GetSphSampGrid(bandwidth, pts, true);
-
-//}
-
-
 void MeshGrid(const cv::Mat &X_val, const cv::Mat &Y_val, cv::Mat &X_grid, cv::Mat &Y_grid)
 {
     cv::repeat(X_val,Y_val.total(),1,X_grid);

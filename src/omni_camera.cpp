@@ -481,9 +481,6 @@ int OmniCamera::CompLUTsampSph2Im(int bandwidth)
 
     this->GetSphSampGrid(bandwidth,sphGrid);
 
-//    std::cout << "sph grid size : "<<sphGrid.rows<<" "<<sphGrid.cols<<std::endl;
-//    std::cout << "sph grid : "<<sphGrid<<std::endl;
-
     cv::MatIterator_<float> mat_it = sphGrid.begin<float>();
 
     int ind = 0;
@@ -512,11 +509,11 @@ int OmniCamera::CompLUTsampSph2Im(int bandwidth)
     subMatSph = sphGrid(cv::Rect(ind,0,sphGrid.cols-ind,3));
     subMatIm = imGrid(cv::Rect(ind,0,sphGrid.cols-ind,2));
 
-    RotateCloudPoint(subMatSph,0,180,0);
+    RotateCloudPoint(subMatSph,0.,180.,0.);
 
     this->camera_2->Sph2Im(subMatSph,subMatIm);
 
-    imGrid.convertTo(this->_LUTsph_im,CV_32F);
+    imGrid.convertTo(this->_LUTsph_im,CV_32S);
 
     return ind;
 }
@@ -529,7 +526,7 @@ void OmniCamera::SampSphFct(cv::Mat &sampFct, int bandwidth)
 
     int ind = CompLUTsampSph2Im(bandwidth);
 
-    sampFct = cv::Mat::zeros(1,this->_LUTsph_im.cols*2,CV_8U);
+    sampFct = cv::Mat::zeros(1,this->_LUTsph_im.cols,CV_64F);
 
     cv::Mat grayIm;
 
@@ -540,10 +537,15 @@ void OmniCamera::SampSphFct(cv::Mat &sampFct, int bandwidth)
         grayIm = this->camera_1->_Frame;
     }
 
+//    std::cout<<"_LUTsph_im size : " << _LUTsph_im.rows<<" "<<_LUTsph_im.cols<<std::endl;
+//    std::cout<<"_LUTsph_im type : " << _LUTsph_im.type()<<std::endl<<std::endl;
+
     for (int i=0 ; i<this->_LUTsph_im.cols ; i++)
     {
+//        std::cout<<"Ind : " << this->_LUTsph_im.at<int>(0,i)<<" "<<this->_LUTsph_im.at<int>(1,i)<<" val : "
+//                <<(double)(grayIm.at<uchar>(this->_LUTsph_im.at<int>(0,i),this->_LUTsph_im.at<int>(1,i)))<<std::endl<<std::endl;
 
-        sampFct.at<uchar>(0,i) = grayIm.at<uchar>(this->_LUTsph_im.at<int>(0,i),this->_LUTsph_im.at<int>(1,i));
+        sampFct.at<double>(0,i) = (double)(grayIm.at<uchar>(this->_LUTsph_im.at<int>(0,i),this->_LUTsph_im.at<int>(1,i)));
 
         if (i == (ind-1))
         {

@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
     image_transport
     vocabulary_tree
     libsiftfast
+    soft20
 )
 
 find_package( OpenCV REQUIRED )
@@ -137,10 +138,10 @@ add_executable(track_camera_orientation
                            src/omni_camera.cpp
                            src/fisheye.cpp
                            src/usefull.cpp
-
+                           src/sssoft.cpp
 )
 target_link_libraries(track_camera_orientation
-   ${catkin_LIBRARIES}
+   ${catkin_LIBRARIES} fftw3
 )
 
 ## Add cmake target dependencies of the executable/library

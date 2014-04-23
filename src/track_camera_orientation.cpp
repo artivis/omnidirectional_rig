@@ -1,6 +1,7 @@
 #include "image_handler.h"
 #include "omni_camera.h"
 #include "fisheye.h"
+#include "sssoft.h"
 
 #include <opencv2/core/core.hpp>
 
@@ -49,8 +50,8 @@ int main(int argc, char** argv){
 
     omniSys.DispParam();
 
-//    omniSys.camera_1->readImage(im_cam1);
-//    omniSys.camera_2->readImage(im_cam2);
+    omniSys.camera_1->readImage(im_cam1);
+    omniSys.camera_2->readImage(im_cam2);
 
     omniSys.camera_1->LoadMask(maskCamera_1);
     omniSys.camera_2->LoadMask(maskCamera_2);
@@ -59,9 +60,33 @@ int main(int argc, char** argv){
 
     cv::Mat sampSphFunc;
 
-    omniSys.SampSphFct(sampSphFunc,8);
+    int bandwidth = 64;
 
-    return 1;
+    std::vector< std::vector< std::complex<double> > > sphHarm;
+
+    omniSys.SampSphFct(sampSphFunc,bandwidth);
+
+    SOFTWRAPP::SphericalHarmonics(bandwidth,sampSphFunc,sphHarm);
+
+    std::vector< std::complex<double> >::iterator _it_begin, _it_end;
+
+    for (int i=0; i < sphHarm.size();i++)
+    {
+
+        _it_begin = sphHarm.at(i).begin();
+
+        _it_end = sphHarm.at(i).end();
+
+        while(_it_begin != _it_end)
+        {
+            std::cout<<"degree : "<<i<<" val : "<<*_it_begin<<std::endl;
+
+            _it_begin++;
+        }
+
+    }
+
+    return -1;
 
     do
     {

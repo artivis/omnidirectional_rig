@@ -3,73 +3,68 @@
 #include <math.h>
 #include <stdlib.h>
 
-#include "fftw3.h"
+#include <fftw3.h>
 
 #include <soft20/makeweights.h>
+#include <csecond.h>
 #include <soft20/so3_correlate_fftw.h>
 #include <soft20/soft_fftw.h>
 #include <soft20/s2_cospmls.h>
-//#include <soft20/s2_legendreTransforms.h>
+#include <soft20/s2_legendreTransforms.h>
 #include <soft20/s2_semi_memo.h>
 #include <soft20/s2_primitive.h>
+#include <soft20/wrap_fftw.h>
 
 #include <iostream>
 
 
+#define NORM( x ) ( (x[0])*(x[0]) + (x[1])*(x[1]) )
+
+
 SOFTWRAPP::SOFTWRAPP()
 {
+
 }
 
 
-void SOFTWRAPP::CorrSO3(int bwIn, int bwOut, std::vector< std::complex<double> > &pattern, std::vector< std::complex<double> > &signal, cv::Vec3f &rotation)
+void SOFTWRAPP::CorrSO3(int bwIn, int bwOut, const std::vector< std::vector< std::complex<double> > > &pattern,
+                        const std::vector< std::vector< std::complex<double> > >&signal, cv::Vec3f &rotation, int degLim)
 {
 
-      int i ;
-      int n, degLim ;
+      int i, l, m;
+      int n, dummy ;
       fftw_complex *workspace1, *workspace2  ;
       double *workspace3 ;
-      double *sigR, *sigI ;
       double *sigCoefR, *sigCoefI ;
       double *patCoefR, *patCoefI ;
       fftw_complex *so3Sig, *so3Coef ;
       fftw_plan p1 ;
+      int na[2], inembed[2], onembed[2] ;
+      int rank, howmany, istride, idist, ostride, odist ;
       int tmp, maxloc, ii, jj, kk ;
       double maxval, tmpval ;
-      double *weights ;
-      double *seminaive_naive_tablespace  ;
-      fftw_plan dctPlan, fftPlan ;
 
-      degLim = std::floor(bwIn/2);
+      if (degLim == 0) degLim = std::floor(bwIn/2);
 
       n = 2 * bwIn ;
 
-      //sigR = (double *) calloc( n * n, sizeof(double) );
-      //sigI = (double *) calloc( n * n, sizeof(double) );
-      so3Sig = fftw_malloc( sizeof(fftw_complex) * (8*bwOut*bwOut*bwOut) );
-      workspace1 = fftw_malloc( sizeof(fftw_complex) * (8*bwOut*bwOut*bwOut) );
-      workspace2 = fftw_malloc( sizeof(fftw_complex) * ((14*bwIn*bwIn) + (48 * bwIn)));
+      so3Sig = (fftw_complex*) fftw_malloc( sizeof(fftw_complex) * (8*bwOut*bwOut*bwOut) );
+      so3Coef = (fftw_complex*) fftw_malloc( sizeof(fftw_complex) * ((4*bwOut*bwOut*bwOut-bwOut)/3) ) ;
+      workspace1 = (fftw_complex*) fftw_malloc( sizeof(fftw_complex) * (8*bwOut*bwOut*bwOut) );
+      workspace2 = (fftw_complex*) fftw_malloc( sizeof(fftw_complex) * ((14*bwIn*bwIn) + (48 * bwIn)));
       workspace3 = (double *) malloc( sizeof(double) * (12*n + n*bwIn));
       sigCoefR = (double *) malloc( sizeof(double) * bwIn * bwIn ) ;
       sigCoefI = (double *) malloc( sizeof(double) * bwIn * bwIn ) ;
       patCoefR = (double *) malloc( sizeof(double) * bwIn * bwIn ) ;
       patCoefI = (double *) malloc( sizeof(double) * bwIn * bwIn ) ;
-      so3Coef = fftw_malloc( sizeof(fftw_complex) * ((4*bwOut*bwOut*bwOut-bwOut)/3) ) ;
 
-      seminaive_naive_tablespace =
-        (double *) malloc(sizeof(double) *
-                  (Reduced_Naive_TableSize(bwIn,bwIn) +
-                   Reduced_SpharmonicTableSize(bwIn,bwIn)));
-
-      weights = (double *) malloc(sizeof(double) * (4*bwIn));
 
       /****
            At this point, check to see if all the memory has been
            allocated. If it has not, there's no point in going further.
       ****/
 
-      if ( (seminaive_naive_tablespace == NULL) || (weights == NULL) ||
-           //(sigR == NULL) || (sigI == NULL) ||
-           (so3Coef == NULL) ||
+      if ( (so3Coef == NULL) ||
            (workspace1 == NULL) || (workspace2 == NULL) ||
            (workspace3 == NULL) ||
            (sigCoefR == NULL) || (sigCoefI == NULL) ||
@@ -82,89 +77,165 @@ void SOFTWRAPP::CorrSO3(int bwIn, int bwOut, std::vector< std::complex<double> >
 
 
 
+//      BOOST_FOREACH(myvect2 v, vect1)
+//      {
+//          BOOST_FOREACH(element e, v)
+//          {
+//              do_something_with_e(e);
+//          }
+//      }
 
 
 
+    /* retrieve input data from human readable order */
 
+    std::vector< std::vector< std::complex<double> > >::const_iterator _it_pattdeg, _it_pattdeg_end ;
+    std::vector< std::complex<double> >::const_iterator _it_pattord, _it_pattord_end;
 
+    std::vector< std::vector< std::complex<double> > >::const_iterator _it_sigdeg, _it_sigdeg_end ;
+    std::vector< std::complex<double> >::const_iterator _it_sigord, _it_sigord_end;
 
+    std::vector< std::complex<double> > tmp_vec;
+    std::complex<double> tmp_cpl;
+
+    _it_pattdeg = pattern.begin();
+    _it_pattdeg_end = pattern.end();
+
+    _it_sigdeg = signal.begin();
+    _it_sigdeg_end = signal.end();
+
+    for ( l = 0 ; l < bwIn ; l++ )
+    {
+        for ( m = -l ; m < l + 1 ; m++ )
+        {
+            //retrieve pattern
+            tmp_vec = *_it_pattdeg;
+
+            _it_pattord = tmp_vec.begin();
+            _it_pattord_end = tmp_vec.end();
+
+            dummy = seanindex(m, l, bwIn);
+
+            tmp_cpl = *_it_pattord;
+
+            patCoefR[dummy] = tmp_cpl.real();
+            patCoefI[dummy] = tmp_cpl.imag();
+
+            //retrieve signal
+            tmp_vec = *_it_sigdeg;
+
+            _it_sigord = tmp_vec.begin();
+            _it_sigord_end = tmp_vec.end();
+
+            tmp_cpl = *_it_sigord;
+
+            sigCoefR[dummy] = tmp_cpl.real();
+            sigCoefI[dummy] = tmp_cpl.imag();
+
+            if (_it_pattord == _it_pattord_end)
+            {
+                std::cout<<"Should not come here, error with order !"<<std::endl;
+                break;
+            }
+
+            _it_pattord++;
+            _it_sigord++;
+            }
+
+        if (_it_pattdeg == _it_pattdeg_end)
+        {
+            std::cout<<"Should not come here, error with degree !"<<std::endl;
+            break;
+        }
+
+        _it_pattdeg++;
+        _it_sigdeg++;
+    }
+
+    /* create plan for inverse SO(3) transform */
+    n = 2 * bwOut ;
+    howmany = n*n ;
+    idist = n ;
+    odist = n ;
+    rank = 2 ;
+    inembed[0] = n ;
+    inembed[1] = n*n ;
+    onembed[0] = n ;
+    onembed[1] = n*n ;
+    istride = 1 ;
+    ostride = 1 ;
+    na[0] = 1 ;
+    na[1] = n ;
+
+    p1 = fftw_plan_many_dft( rank, na, howmany,
+                             workspace1, inembed,
+                             istride, idist,
+                             so3Sig, onembed,
+                             ostride, odist,
+                             FFTW_FORWARD, FFTW_ESTIMATE );
 
 
     so3CombineCoef_fftw( bwIn, bwOut, degLim,
-                 sigCoefR, sigCoefI,
-                 patCoefR, patCoefI,
-                 so3Coef ) ;
-
-
+                         sigCoefR, sigCoefI,
+                         patCoefR, patCoefI,
+                         so3Coef ) ;
 
 
     /* now inverse so(3) */
-      Inverse_SO3_Naive_fftw( bwOut,
-                  so3Coef,
-                  so3Sig,
-                  workspace1,
-                  workspace2,
-                  workspace3,
-                  &p1,
-                  0 ) ;
+    Inverse_SO3_Naive_fftw( bwOut, so3Coef, so3Sig,
+                            workspace1, workspace2, workspace3,
+                            &p1, 0 ) ;
 
 
+    /* now find max value */
+    maxval = 0.0 ;
+    maxloc = 0 ;
 
-      /* now find max value */
-      maxval = 0.0 ;
-      maxloc = 0 ;
-      for ( i = 0 ; i < 8*bwOut*bwOut*bwOut ; i ++ )
+    for ( i = 0 ; i < 8*bwOut*bwOut*bwOut ; i ++ )
+    {
+        tmpval = NORM( so3Sig[i] );
+
+        if ( tmpval > maxval )
         {
-          /*
-        if (so3Sig[i][0] >= maxval)
-        {
-        maxval = so3Sig[i][0];
-        maxloc = i ;
+            maxval = tmpval;
+            maxloc = i ;
         }
-          */
-          tmpval = NORM( so3Sig[i] );
-          if ( tmpval > maxval )
-        {
-          maxval = tmpval;
-          maxloc = i ;
-        }
+    }
 
-        }
+    ii = floor( maxloc / (4.*bwOut*bwOut) );
+    tmp = maxloc - (ii*4.*bwOut*bwOut);
+    jj = floor( tmp / (2.*bwOut) );
+    tmp = maxloc - (ii *4*bwOut*bwOut) - jj*(2*bwOut);
+    kk = tmp ;
 
-      ii = floor( maxloc / (4.*bwOut*bwOut) );
-      tmp = maxloc - (ii*4.*bwOut*bwOut);
-      jj = floor( tmp / (2.*bwOut) );
-      tmp = maxloc - (ii *4*bwOut*bwOut) - jj*(2*bwOut);
-      kk = tmp ;
+    printf("ii = %d\tjj = %d\tkk = %d\n", ii, jj, kk);
 
-      printf("ii = %d\tjj = %d\tkk = %d\n", ii, jj, kk);
+    printf("alpha = %f\nbeta = %f\ngamma = %f\n",
+            M_PI*jj/((double) bwOut),
+            M_PI*(2*ii+1)/(4.*bwOut),
+            M_PI*kk/((double) bwOut) );
 
-      printf("alpha = %f\nbeta = %f\ngamma = %f\n",
-         M_PI*jj/((double) bwOut),
-         M_PI*(2*ii+1)/(4.*bwOut),
-         M_PI*kk/((double) bwOut) );
+
+    rotation[0] = M_PI*jj/((double) bwOut); //alpha
+    rotation[1] = M_PI*(2*ii+1)/(4.*bwOut); //beta
+    rotation[2] = M_PI*kk/((double) bwOut); //gamma
 
 
 
-      fftw_destroy_plan( p1 );
-        fftw_destroy_plan( fftPlan );
-        fftw_destroy_plan( dctPlan );
 
+        /* free memory */
 
+    fftw_destroy_plan( p1 );
 
-        free( weights );
-        fftw_free( so3Coef ) ;
-        free( patCoefI );
-        free( patCoefR );
-        free( sigCoefI );
-        free( sigCoefR );
-        free( workspace3 );
-        fftw_free( workspace2 );
-        fftw_free( workspace1 );
-        fftw_free( so3Sig ) ;
-        free( sigI );
-        free( sigR );
-
+    fftw_free( so3Coef ) ;
+    free( patCoefI );
+    free( patCoefR );
+    free( sigCoefI );
+    free( sigCoefR );
+    free( workspace3 );
+    fftw_free( workspace2 );
+    fftw_free( workspace1 );
+    fftw_free( so3Sig ) ;
 
 }
 
@@ -253,7 +324,7 @@ void SOFTWRAPP::SphericalHarmonics(int bw, const cv::Mat &sampSphfunc,  std::vec
 
     for(int i=0; i<size*size; i++)
     {
-        rdata[i] = sampSphfunc.at<double>(0,i); //*_it;
+        rdata[i] = sampSphfunc.at<double>(0,i);
         idata[i] = 0.0;
     }
 
@@ -440,3 +511,34 @@ static void SphericalHarmonics(int bw, const cv::Mat &sampSphfunc, std::vector< 
     free(idata);
     free(rdata);
 }
+
+
+
+void SOFTWRAPP::DispSphHarm(std::vector< std::vector< std::complex<double> > > &sphHarm)
+{
+    std::vector< std::complex<double> >::iterator _it_begin, _it_end;
+
+    for (int i=0; i < sphHarm.size();i++)
+    {
+
+        _it_begin = sphHarm.at(i).begin();
+
+        _it_end = sphHarm.at(i).end();
+
+        while(_it_begin != _it_end)
+        {
+            std::cout<<"degree : "<<i<<" val : "<<*_it_begin<<std::endl;
+
+            _it_begin++;
+        }
+    }
+}
+
+
+
+
+
+
+
+
+

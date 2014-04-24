@@ -58,35 +58,56 @@ int main(int argc, char** argv){
 
     double time;
 
-    cv::Mat sampSphFunc;
+    cv::Mat sampSphFunc1, sampSphFunc2;
 
-    int bandwidth = 64;
+    int bandwidth = 256;
 
-    std::vector< std::vector< std::complex<double> > > sphHarm;
+    std::vector< std::vector< std::complex<double> > > sphHarm1, sphHarm2;
 
-    omniSys.SampSphFct(sampSphFunc,bandwidth);
+    omniSys.SampSphFct(sampSphFunc1,bandwidth);
 
-    SOFTWRAPP::SphericalHarmonics(bandwidth,sampSphFunc,sphHarm);
+    SOFTWRAPP::SphericalHarmonics(bandwidth,sampSphFunc1,sphHarm1);
 
-    std::vector< std::complex<double> >::iterator _it_begin, _it_end;
+//    SOFTWRAPP::DispSphHarm(sphHarm1);
 
-    for (int i=0; i < sphHarm.size();i++)
-    {
+    std::cout << "dere !"<<std::endl;
 
-        _it_begin = sphHarm.at(i).begin();
+    im_cam1 = "etc/images/left_frame0002.jpg";
+    im_cam2 = "etc/images/right_frame0002.jpg";
 
-        _it_end = sphHarm.at(i).end();
+    omniSys.camera_1->readImage(im_cam1);
+    omniSys.camera_2->readImage(im_cam2);
 
-        while(_it_begin != _it_end)
-        {
-            std::cout<<"degree : "<<i<<" val : "<<*_it_begin<<std::endl;
+    omniSys.SampSphFct(sampSphFunc2,bandwidth);
 
-            _it_begin++;
-        }
+    SOFTWRAPP::SphericalHarmonics(bandwidth,sampSphFunc2,sphHarm2);
 
-    }
+    std::cout << "dere 2 !"<<std::endl;
 
-    return -1;
+    cv::Vec3f rotation;
+
+    std::cout << "dere 3 !"<<std::endl;
+
+    SOFTWRAPP::CorrSO3(bandwidth,64,sphHarm1,sphHarm2,rotation);
+
+    std::cout << "dere 4 !"<<std::endl;
+
+
+    std::cout<<"Rotation :\n alpha : "<<rotation[0]<<
+             "\n             beta  : "<<rotation[1]<<
+             "\n             gamma : "<<rotation[2]<<std::endl;
+
+
+
+
+
+
+    return -2;
+
+
+
+
+
 
     do
     {

@@ -3,9 +3,6 @@
 
 #include <opencv2/core/core.hpp>
 
-#define NORM( x ) ( (x[0])*(x[0]) + (x[1])*(x[1]) )
-
-
 //#warning "HOOOOOOOOOOOOOOOOOOOOO"
 
 
@@ -20,9 +17,11 @@ public:
 
     static void SphericalHarmonics(int, const cv::Mat&, std::vector< std::complex<double> >&);
 
-    static void CorrSO3(int, int, std::vector< std::complex<double> >&, std::vector< std::complex<double> >&, cv::Vec3f&);
+    static void CorrSO3(int, int, const std::vector< std::vector< std::complex<double> > >&pattern,
+                                  const std::vector< std::vector< std::complex<double> > >&signal,
+                                  cv::Vec3f &rotation, int degLim = 0);
 
-//    void
+    static void DispSphHarm(std::vector< std::vector< std::complex<double> > > &);
 
 };
 

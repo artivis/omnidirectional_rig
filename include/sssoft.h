@@ -21,7 +21,9 @@ public:
                                   const std::vector< std::vector< std::complex<double> > >&signal,
                                   cv::Vec3f &rotation, int degLim = 0);
 
-    static void DispSphHarm(std::vector< std::vector< std::complex<double> > > &);
+    static void DispSphHarm(const std::vector< std::vector< std::complex<double> > > &);
+
+    static void DispRotEst(const cv::Vec3f&);
 
 };
 

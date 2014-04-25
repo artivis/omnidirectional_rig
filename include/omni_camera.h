@@ -87,6 +87,8 @@ class OmniCamera {
 
         bool _isSampled;
         int _sampling_ratio;
+
+        int _ind_LUTsph;
 };
 
 

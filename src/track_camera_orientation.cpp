@@ -60,47 +60,57 @@ int main(int argc, char** argv){
 
     cv::Mat sampSphFunc1, sampSphFunc2;
 
-    int bandwidth = 256;
+    int bwIn = 16, bwOut = 8;
 
     std::vector< std::vector< std::complex<double> > > sphHarm1, sphHarm2;
 
-    omniSys.SampSphFct(sampSphFunc1,bandwidth);
+    omniSys.SampSphFct(sampSphFunc1,bwIn);
 
-    SOFTWRAPP::SphericalHarmonics(bandwidth,sampSphFunc1,sphHarm1);
+    MatInfo(sampSphFunc1,"sampSphFunc1",true);
 
-//    SOFTWRAPP::DispSphHarm(sphHarm1);
+    std::cout << "START !!!!!!!!!!!!!!!!!!!!!"<<std::endl;
 
-    std::cout << "dere !"<<std::endl;
+    SOFTWRAPP::SphericalHarmonics(bwIn,sampSphFunc1,sphHarm1);
 
-    im_cam1 = "etc/images/left_frame0002.jpg";
-    im_cam2 = "etc/images/right_frame0002.jpg";
+    SOFTWRAPP::DispSphHarm(sphHarm1);
+
+    std::cout << "MIDDLE !!!!!!!!!!!!!!!!!!!!!"<<std::endl;
+
+    sampSphFunc1.release(); sphHarm1.clear();
+
+    omniSys.SampSphFct(sampSphFunc1,bwIn);
+
+    MatInfo(sampSphFunc1,"sampSphFunc1",true);
+
+    SOFTWRAPP::SphericalHarmonics(bwIn,sampSphFunc1,sphHarm1);
+
+    SOFTWRAPP::DispSphHarm(sphHarm1);
+
+    std::cout << "END !!!!!!!!!!!!!!!!!!!!!"<<std::endl;
+
+    im_cam1 = "etc/images/left_frame0000.jpg";
+    im_cam2 = "etc/images/right_frame0000.jpg";
 
     omniSys.camera_1->readImage(im_cam1);
     omniSys.camera_2->readImage(im_cam2);
 
-    omniSys.SampSphFct(sampSphFunc2,bandwidth);
+    omniSys.SampSphFct(sampSphFunc2,bwIn);
 
-    SOFTWRAPP::SphericalHarmonics(bandwidth,sampSphFunc2,sphHarm2);
+    MatInfo(sampSphFunc1,"sampSphFunc2",true);
 
-    std::cout << "dere 2 !"<<std::endl;
+    std::cout << "START !!!!!!!!!!!!!!!!!!!!!"<<std::endl;
+
+    SOFTWRAPP::SphericalHarmonics(bwIn,sampSphFunc2,sphHarm2);
+
+    SOFTWRAPP::DispSphHarm(sphHarm2);
+
+    std::cout << "END !!!!!!!!!!!!!!!!!!!!!"<<std::endl;
 
     cv::Vec3f rotation;
 
-    std::cout << "dere 3 !"<<std::endl;
+    SOFTWRAPP::CorrSO3(bwIn,bwOut,sphHarm1,sphHarm1,rotation);
 
-    SOFTWRAPP::CorrSO3(bandwidth,64,sphHarm1,sphHarm2,rotation);
-
-    std::cout << "dere 4 !"<<std::endl;
-
-
-    std::cout<<"Rotation :\n alpha : "<<rotation[0]<<
-             "\n             beta  : "<<rotation[1]<<
-             "\n             gamma : "<<rotation[2]<<std::endl;
-
-
-
-
-
+    SOFTWRAPP::DispRotEst(rotation);
 
     return -2;
 

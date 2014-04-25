@@ -141,6 +141,17 @@ double Deg2Rad(double angle)
 
 
 
+void MatInfo(const cv::Mat &mat, const std::string &matname, bool val)
+{
+    std::cout<<"\nMat Info : \nName : "<<matname<<"\nisEmpty : "<<mat.empty()<<"\nrows : "<<mat.rows<<" cols : "<<mat.cols<<std::endl;
+    std::cout<<"type : "<<mat.type()<<std::endl;
 
+    if(val)
+    {
+        std::cout<<"\nvalues : "<<mat<<std::endl<<std::endl;
+    }else{
+        std::cout<<std::endl<<std::endl;
+    }
+}
 
 

@@ -15,6 +15,8 @@ OmniCamera::OmniCamera(const std::vector<std::string> &topicsName, const std::ve
     this->_isSampled = false;
 
     this->_sampling_ratio = 1;
+
+    this->_ind_LUTsph = 0;
 }
 
 OmniCamera::OmniCamera(const std::vector<std::string> &topicsName, const std::vector<std::string> &cameraParamPath, const std::string &extrinPath)
@@ -27,11 +29,13 @@ OmniCamera::OmniCamera(const std::vector<std::string> &topicsName, const std::ve
 
     this->_panoSize = cv::Size(1200,400);
 
-    this->_init = this->camera_1->IsInit() && this->camera_2->IsInit() && true;
-
     this->_isSampled = false;
 
     this->_sampling_ratio = 1;
+
+    this->_ind_LUTsph = 0;
+
+    this->_init = this->camera_1->IsInit() && this->camera_2->IsInit() && true;
 }
 
 OmniCamera::~OmniCamera(){
@@ -474,6 +478,8 @@ int OmniCamera::CompLUTsampSph2Im(int bandwidth)
 {
     if (!this->IsInit()) return -1;
 
+    if (!this->_LUTsph_im.empty()) return this->_ind_LUTsph;
+
     cv::Mat sphGrid;
     cv::Mat imGrid;
     cv::Mat subMatSph;
@@ -490,6 +496,8 @@ int OmniCamera::CompLUTsampSph2Im(int bandwidth)
         mat_it++;
         ind++;
     }while(*mat_it < (mypi/2));
+
+    this->_ind_LUTsph = ind;
 
     mat_it = sphGrid.end<float>();
 
@@ -537,13 +545,10 @@ void OmniCamera::SampSphFct(cv::Mat &sampFct, int bandwidth)
         grayIm = this->camera_1->_Frame;
     }
 
-//    std::cout<<"_LUTsph_im size : " << _LUTsph_im.rows<<" "<<_LUTsph_im.cols<<std::endl;
-//    std::cout<<"_LUTsph_im type : " << _LUTsph_im.type()<<std::endl<<std::endl;
-
     for (int i=0 ; i<this->_LUTsph_im.cols ; i++)
     {
 //        std::cout<<"Ind : " << this->_LUTsph_im.at<int>(0,i)<<" "<<this->_LUTsph_im.at<int>(1,i)<<" val : "
-//                <<(double)(grayIm.at<uchar>(this->_LUTsph_im.at<int>(0,i),this->_LUTsph_im.at<int>(1,i)))<<std::endl<<std::endl;
+//                <<(double)(grayIm.at<uchar>(this->_LUTsph_im.at<int>(0,i),this->_LUTsph_im.at<int>(1,i)))<<std::endl;
 
         sampFct.at<double>(0,i) = (double)(grayIm.at<uchar>(this->_LUTsph_im.at<int>(0,i),this->_LUTsph_im.at<int>(1,i)));
 

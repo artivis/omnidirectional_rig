@@ -38,4 +38,6 @@ double Deg2Rad(double);
 
 std::string AddPath(const std::string& obj, const std::string& root);
 
+void MatInfo(const cv::Mat&,const std::string &matname = "", bool val = false);
+
 #endif // USEFULL_H

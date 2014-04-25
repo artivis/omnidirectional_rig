@@ -28,7 +28,7 @@ SOFTWRAPP::SOFTWRAPP()
 
 
 void SOFTWRAPP::CorrSO3(int bwIn, int bwOut, const std::vector< std::vector< std::complex<double> > > &pattern,
-                        const std::vector< std::vector< std::complex<double> > >&signal, cv::Vec3f &rotation, int degLim)
+                        const std::vector< std::vector< std::complex<double> > > &signal, cv::Vec3f &rotation, int degLim)
 {
 
       int i, l, m;
@@ -44,7 +44,7 @@ void SOFTWRAPP::CorrSO3(int bwIn, int bwOut, const std::vector< std::vector< std
       int tmp, maxloc, ii, jj, kk ;
       double maxval, tmpval ;
 
-      if (degLim == 0) degLim = std::floor(bwIn/2);
+      if (degLim == 0) degLim = bwOut-1;
 
       n = 2 * bwIn ;
 
@@ -208,18 +208,9 @@ void SOFTWRAPP::CorrSO3(int bwIn, int bwOut, const std::vector< std::vector< std
     tmp = maxloc - (ii *4*bwOut*bwOut) - jj*(2*bwOut);
     kk = tmp ;
 
-    printf("ii = %d\tjj = %d\tkk = %d\n", ii, jj, kk);
-
-    printf("alpha = %f\nbeta = %f\ngamma = %f\n",
-            M_PI*jj/((double) bwOut),
-            M_PI*(2*ii+1)/(4.*bwOut),
-            M_PI*kk/((double) bwOut) );
-
-
     rotation[0] = M_PI*jj/((double) bwOut); //alpha
     rotation[1] = M_PI*(2*ii+1)/(4.*bwOut); //beta
     rotation[2] = M_PI*kk/((double) bwOut); //gamma
-
 
 
 
@@ -236,39 +227,37 @@ void SOFTWRAPP::CorrSO3(int bwIn, int bwOut, const std::vector< std::vector< std
     fftw_free( workspace2 );
     fftw_free( workspace1 );
     fftw_free( so3Sig ) ;
-
 }
 
 
 void SOFTWRAPP::SphericalHarmonics(int bw, const cv::Mat &sampSphfunc,  std::vector< std::vector< std::complex<double> > > &SphHarm)
 {
-    int size ;
     int l, m, dummy;
-    int cutoff;
     int rank, howmany_rank ;
     double *rdata, *idata ;
     double *rcoeffs, *icoeffs ;
     double *weights ;
-    double *seminaive_naive_tablespace, *workspace;
+    double *seminaive_naive_tablespace, *workspace1;
     double **seminaive_naive_table ;
     fftw_plan dctPlan, fftPlan ;
+    fftw_complex  *workspace2;
     fftw_iodim dims[1], howmany_dims[1];
 
-    /*** ASSUMING WILL SEMINAIVE ALL ORDERS ***/
-    cutoff = bw ;
-    size = 2*bw;
+    int n = 2 * bw ;
 
     /* allocate memory */
-    rdata = (double *) malloc(sizeof(double) * (size * size));
-    idata = (double *) malloc(sizeof(double) * (size * size));
+    rdata = (double *) malloc(sizeof(double) * (n * n));
+    idata = (double *) malloc(sizeof(double) * (n * n));
     rcoeffs = (double *) malloc(sizeof(double) * (bw * bw));
     icoeffs = (double *) malloc(sizeof(double) * (bw * bw));
     weights = (double *) malloc(sizeof(double) * 4 * bw);
+
+    workspace1 = (double *) malloc( sizeof(double) * (12*n + n*bw));
+    workspace2 = (fftw_complex*)fftw_malloc( sizeof(fftw_complex) * ((14*bw*bw) + (48 * bw)));
+
     seminaive_naive_tablespace = (double *) malloc(sizeof(double) *
-                                    ( Reduced_Naive_TableSize(bw,cutoff) +
-                                      Reduced_SpharmonicTableSize(bw,cutoff)));
-    workspace = (double *) malloc(sizeof(double) * ((8 * (bw*bw)) +
-                     (7 * bw)));
+                                    ( Reduced_Naive_TableSize(bw,bw) +
+                                      Reduced_SpharmonicTableSize(bw,bw)));
 
     /****
         At this point, check to see if all the memory has been
@@ -278,25 +267,19 @@ void SOFTWRAPP::SphericalHarmonics(int bw, const cv::Mat &sampSphfunc,  std::vec
     if ((rdata == NULL) || (idata == NULL) ||
         (rcoeffs == NULL) || (icoeffs == NULL) ||
         (seminaive_naive_tablespace == NULL) ||
-        (workspace == NULL) )
+        (workspace1 == NULL) || (workspace2 == NULL)
+            || (weights == NULL))
     {
         perror("Error in allocating memory");
         exit( 1 ) ;
     }
 
-      /* now precompute the Legendres */
-    seminaive_naive_table = SemiNaive_Naive_Pml_Table(bw, cutoff,
-                            seminaive_naive_tablespace,
-                            workspace);
 
-    /* construct fftw plans */
+    /* create fftw plans for the S^2 transforms */
+    /* first for the dct */
+    dctPlan = fftw_plan_r2r_1d( 2*bw, weights, workspace1,
+                                FFTW_REDFT10, FFTW_ESTIMATE ) ;
 
-    /* make DCT plan -> note that I will be using the GURU
-       interface to execute these plans within the routines*/
-
-    /* forward DCT */
-    dctPlan = fftw_plan_r2r_1d( 2*bw, weights, rdata,
-                FFTW_REDFT10, FFTW_ESTIMATE ) ;
 
     /*
         fftw "preamble" ;
@@ -313,33 +296,41 @@ void SOFTWRAPP::SphericalHarmonics(int bw, const cv::Mat &sampSphfunc,  std::vec
 
     /* forward fft */
     fftPlan = fftw_plan_guru_split_dft( rank, dims,
-                howmany_rank, howmany_dims,
-                rdata, idata,
-                workspace, workspace+(4*bw*bw),
-                FFTW_ESTIMATE );
+                                        howmany_rank, howmany_dims,
+                                        rdata, idata,
+                                        (double *) workspace2,
+                                        (double *) workspace2 + (n*n),
+                                        FFTW_ESTIMATE ); //
+
+
+    seminaive_naive_table = SemiNaive_Naive_Pml_Table(bw, bw,
+                                seminaive_naive_tablespace,
+                                (double *) workspace2);
 
 
     /* now make the weights */
     makeweights( bw, weights );
 
-    for(int i=0; i<size*size; i++)
+
+    /* retrieve input data*/
+    for(int i=0; i<n*n; i++)
     {
         rdata[i] = sampSphfunc.at<double>(0,i);
         idata[i] = 0.0;
     }
 
-    /* now do the forward spherical transform */
 
+
+    /* now do the forward spherical transform */
     FST_semi_memo(rdata, idata,
-                rcoeffs, icoeffs,
-                bw,
-                seminaive_naive_table,
-                workspace,
-                0,
-                cutoff,
-                &dctPlan,
-                &fftPlan,
-                weights );
+                  rcoeffs, icoeffs,
+                  bw,
+                  seminaive_naive_table,
+                  (double *) workspace2,
+                  1, bw,
+                  &dctPlan,
+                  &fftPlan,
+                  weights );
 
 
     std::complex<double> tmpOrd;
@@ -357,7 +348,7 @@ void SOFTWRAPP::SphericalHarmonics(int bw, const cv::Mat &sampSphfunc,  std::vec
 
             tmpDeg.push_back(tmpOrd);
 
-            //std::cout<<"l : "<<l<<"m : "<<m<<" coeff : "<<rcoeffs[dummy]<<" "<<icoeffs[dummy]<<" I"<<std::endl;
+//            std::cout<<"l : "<<l<<"m : "<<m<<" coeff : "<<rcoeffs[dummy]<<" "<<icoeffs[dummy]<<" I"<<std::endl;
         }
 
         SphHarm.push_back(tmpDeg);
@@ -365,12 +356,18 @@ void SOFTWRAPP::SphericalHarmonics(int bw, const cv::Mat &sampSphfunc,  std::vec
     }
 
     /* clean up */
+
+    tmpDeg.clear();
+
     fftw_destroy_plan( fftPlan );
     fftw_destroy_plan( dctPlan );
 
-    free(workspace);
+    free(workspace1);
+    fftw_free(workspace2);
+
     free(seminaive_naive_table);
     free(seminaive_naive_tablespace);
+
     free(weights);
     free(icoeffs);
     free(rcoeffs);
@@ -514,28 +511,39 @@ static void SphericalHarmonics(int bw, const cv::Mat &sampSphfunc, std::vector< 
 
 
 
-void SOFTWRAPP::DispSphHarm(std::vector< std::vector< std::complex<double> > > &sphHarm)
+void SOFTWRAPP::DispSphHarm(const std::vector< std::vector< std::complex<double> > > &sphHarm)
 {
-    std::vector< std::complex<double> >::iterator _it_begin, _it_end;
+    std::vector< std::complex<double> >::const_iterator _it_begin, _it_end;
+
+    int m = 0;
 
     for (int i=0; i < sphHarm.size();i++)
     {
-
         _it_begin = sphHarm.at(i).begin();
 
         _it_end = sphHarm.at(i).end();
 
+        m = - i;
+
         while(_it_begin != _it_end)
         {
-            std::cout<<"degree : "<<i<<" val : "<<*_it_begin<<std::endl;
+            std::cout<<"l : "<<i<<" m : "<<m<<" val : "<<*_it_begin<<std::endl;
 
             _it_begin++;
+            m++;
         }
     }
+
+    std::cout<<std::endl;
 }
 
 
-
+void SOFTWRAPP::DispRotEst(const cv::Vec3f &rotation)
+{
+    std::cout<<"\nRotation :\n alpha = "<<rotation[0]<<
+             "\n beta  = "<<rotation[1]<<
+             "\n gamma = "<<rotation[2]<<std::endl<<std::endl;
+}
 
 
 

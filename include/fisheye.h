@@ -87,9 +87,11 @@ public:
     void Im2Sph(int rows = 1024,int cols = 1280);
     cv::Vec3f Pix2Sph(int ind_row, int ind_col);
 
+    void Sph2Pano();
+
     void Sph2Im(const cv::Mat&);
     void Sph2Im(const cv::Mat&, cv::Mat&);
-    cv::Vec3f Sph2Im(float th, float phi);
+    cv::Vec2i Sph2Im(float, float, float);
 
     void DownSample(int sampling_ratio = 1);
 

@@ -15,7 +15,6 @@ int main(int argc, char** argv){
 
 //    const std::string cloudPtTopic = "/cloud_sphere";
 //    ros::NodeHandle nh;
-
 //    ros::Publisher pub_CloudSph = nh.advertise<sensor_msgs::PointCloud>(cloudPtTopic,0);
 
     std::vector<std::string> path_yamls_cam;
@@ -56,59 +55,42 @@ int main(int argc, char** argv){
     omniSys.camera_1->LoadMask(maskCamera_1);
     omniSys.camera_2->LoadMask(maskCamera_2);
 
+    omniSys.SetPanoSize(400,800);
+
+    omniSys.MergeLUTWrap();
+
+    omniSys.StitchImage(1);
+
     double time;
 
     cv::Mat sampSphFunc1, sampSphFunc2;
 
-    int bwIn = 16, bwOut = 8;
+    int bwIn = 64;
 
-    std::vector< std::vector< std::complex<double> > > sphHarm1, sphHarm2;
-
-    omniSys.SampSphFct(sampSphFunc1,bwIn);
-
-    MatInfo(sampSphFunc1,"sampSphFunc1",true);
-
-    std::cout << "START !!!!!!!!!!!!!!!!!!!!!"<<std::endl;
-
-    SOFTWRAPP::SphericalHarmonics(bwIn,sampSphFunc1,sphHarm1);
-
-    SOFTWRAPP::DispSphHarm(sphHarm1);
-
-    std::cout << "MIDDLE !!!!!!!!!!!!!!!!!!!!!"<<std::endl;
-
-    sampSphFunc1.release(); sphHarm1.clear();
+    sampSphFunc1 = omniSys.GetPano();
 
     omniSys.SampSphFct(sampSphFunc1,bwIn);
 
-    MatInfo(sampSphFunc1,"sampSphFunc1",true);
-
-    SOFTWRAPP::SphericalHarmonics(bwIn,sampSphFunc1,sphHarm1);
-
-    SOFTWRAPP::DispSphHarm(sphHarm1);
-
-    std::cout << "END !!!!!!!!!!!!!!!!!!!!!"<<std::endl;
-
-    im_cam1 = "etc/images/left_frame0000.jpg";
-    im_cam2 = "etc/images/right_frame0000.jpg";
+    im_cam1 = "etc/images/left_frame0014.jpg";
+    im_cam2 = "etc/images/right_frame0014.jpg";
 
     omniSys.camera_1->readImage(im_cam1);
     omniSys.camera_2->readImage(im_cam2);
 
+    omniSys.StitchImage(1);
+
+    sampSphFunc2 = omniSys.GetPano();
+
     omniSys.SampSphFct(sampSphFunc2,bwIn);
 
-    MatInfo(sampSphFunc1,"sampSphFunc2",true);
+//    cv::imshow("im1",sampSphFunc1*255);
+//    cv::imshow("im2",sampSphFunc2*255);
 
-    std::cout << "START !!!!!!!!!!!!!!!!!!!!!"<<std::endl;
-
-    SOFTWRAPP::SphericalHarmonics(bwIn,sampSphFunc2,sphHarm2);
-
-    SOFTWRAPP::DispSphHarm(sphHarm2);
-
-    std::cout << "END !!!!!!!!!!!!!!!!!!!!!"<<std::endl;
+    cv::waitKey(0);
 
     cv::Vec3f rotation;
 
-    SOFTWRAPP::CorrSO3(bwIn,bwOut,sphHarm1,sphHarm1,rotation);
+    SOFTWRAPP::WrapSphCorr2(bwIn,sampSphFunc1,sampSphFunc2,rotation);
 
     SOFTWRAPP::DispRotEst(rotation);
 

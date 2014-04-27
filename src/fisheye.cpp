@@ -289,7 +289,6 @@ void FishEye::LoadMask(const std::string& maskFile){
 void FishEye::readImage(std::string file){
 
     ImageHandler::readImage(file,this->_Frame);
-
 }
 
 void FishEye::Im2Sph(int rows,int cols){
@@ -453,7 +452,32 @@ void FishEye::Sph2Im(const cv::Mat &sphPts,cv::Mat &imPts)
     }
 }
 
-cv::Vec3f FishEye::Sph2Im(float th, float phi)
+cv::Vec2i FishEye::Sph2Im(float x, float y, float z)
 {
+    cv::Vec2i pix;
+    int row,col;
 
+    col = (int)((x * this->_cameraParam.intrinParam.at<float>(0,0)) /
+          (z + this->_cameraParam.xi) + this->_cameraParam.intrinParam.at<float>(0,2));
+
+    row = (int)((y * this->_cameraParam.intrinParam.at<float>(1,1)) /
+            (z + this->_cameraParam.xi) + this->_cameraParam.intrinParam.at<float>(1,2));
+
+    pix[0] = row;
+    pix[1] = col;
+
+    return pix;
 }
+
+
+void FishEye::Sph2Pano()
+{
+    if (!this->IsInit()) return;
+    if (this->_LUTsphere.empty()) return;
+
+    Cart2Sph(this->_LUTsphere,this->_LUT_wrap_im);
+}
+
+
+
+

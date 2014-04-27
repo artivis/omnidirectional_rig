@@ -132,6 +132,18 @@ target_link_libraries(demo_omni_oculus
    ${catkin_LIBRARIES}
 )
 
+add_executable(demo_omni_live
+                           src/image_handler.cpp
+                           src/Demo_Omni_Live.cpp
+                           src/omni_camera.cpp
+                           src/fisheye.cpp
+                           src/usefull.cpp
+
+)
+target_link_libraries(demo_omni_live
+   ${catkin_LIBRARIES}
+)
+
 add_executable(track_camera_orientation
                            src/image_handler.cpp
                            src/track_camera_orientation.cpp

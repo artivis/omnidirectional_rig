@@ -33,7 +33,7 @@ class OmniCamera {
 
         void LoadLUT(const std::vector<std::string> &, const std::vector<std::string> &);
 
-        void MergeLUTWrap(cv::Size size = cv::Size(1200,400));
+        void MergeLUTWrap();
 
         void MergeLUTSph();
 
@@ -61,11 +61,18 @@ class OmniCamera {
 
         void SetExtrin(const cv::Mat &);
 
+        void SetPanoSize(cv::Size &);
+        void SetPanoSize(int,int);
+
         void DownSample(int sampling_ratio = 1);
+
+        void CompLUTWrap();
+
+        void Sph2Pano();
 
         int CompLUTsampSph2Im(int bandwidth = 64);
 
-        void SampSphFct( cv::Mat&, int bandwidth = 64);
+        void SampSphFct(cv::Mat&, int bandwidth = 64);
 
         void GetSphSampGrid(int bandwidth, cv::Mat &pts, bool ishemi = false);
 

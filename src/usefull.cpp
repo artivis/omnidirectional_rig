@@ -4,40 +4,52 @@
 
 void Cart2Sph(const cv::Mat& cart_coor, cv::Mat& sph_coor, int rad_flag )
 {
-
     if (!cart_coor.rows==3)
     {
         return;
     }
 
-    int loop = std::max(cart_coor.rows,cart_coor.cols);
+    float x,y,z;
 
-    double x,y,z;
-
-    sph_coor = cv::Mat::ones(cart_coor.rows,cart_coor.cols,cart_coor.type());
+    float el,az,rad;
 
     if(rad_flag == 1){
-        for (int i=0;i<loop;i++)
+
+        sph_coor = cv::Mat::ones(3,cart_coor.cols,CV_32F);
+
+        for (int i=0;i<cart_coor.cols;i++)
         {
-            x = cart_coor.at<double>(0,i);
-            y = cart_coor.at<double>(1,i);
-            z = cart_coor.at<double>(2,i);
+            x = cart_coor.at<float>(0,i);
+            y = cart_coor.at<float>(1,i);
+            z = cart_coor.at<float>(2,i);
 
-            sph_coor.at<double>(0,i) = atan2(y,x); //azimmuth
+            rad = sqrt( x*x + y*y + z*z ); //radius
+            el = acos(z / rad); //elevation
+            az = atan2(y,x); //azimmuth
 
-            sph_coor.at<double>(1,i) = atan2(z,sqrt( x*x + y*y )); //elevation
+            if (az < 0) az += (2*mypi);
 
-            sph_coor.at<double>(2,i) = sqrt( x*x + y*y + z*z ); //radius
+            sph_coor.at<float>(0,i) = el;
+            sph_coor.at<float>(1,i) = az;
+            sph_coor.at<float>(2,i) = rad;
         }
     }else{
-        for (int i=0;i<loop;i++)
+
+        sph_coor = cv::Mat::ones(2,cart_coor.cols,cart_coor.type());
+
+        for (int i=0;i<cart_coor.cols;i++)
         {
-            x = cart_coor.at<double>(0,i);
-            y = cart_coor.at<double>(1,i);
+            x = cart_coor.at<float>(0,i);
+            y = cart_coor.at<float>(1,i);
+            z = cart_coor.at<float>(2,i);
 
-            sph_coor.at<double>(0,i) = atan2(y,x); //azimmuth
+            el = acos(z / sqrt( x*x + y*y + z*z)); //elevation
+            az = atan2(y,x); //azimmuth
 
-            sph_coor.at<double>(1,i) = atan2(z,sqrt( x*x + y*y )); //elevation
+            if (az < 0) az += (2*mypi);
+
+            sph_coor.at<float>(0,i) = el;
+            sph_coor.at<float>(1,i) = az;
         }
     }
 }

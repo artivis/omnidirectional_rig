@@ -105,6 +105,19 @@ void OmniCamera::SetExtrin(const cv::Mat &extrin){
 
 }
 
+void OmniCamera::SetPanoSize(cv::Size &panoSize)
+{
+    this->_panoSize = panoSize;
+}
+
+void OmniCamera::SetPanoSize(int rows, int cols)
+{
+    cv::Size panoSize;
+    panoSize.height = rows;
+    panoSize.width = cols;
+    this->_panoSize = panoSize;
+}
+
 void OmniCamera::LoadLUT(const std::vector<std::string> &LUTfiles, const std::vector<std::string> &LUTtype)
 {
     if (!this->IsInit())
@@ -117,27 +130,24 @@ void OmniCamera::LoadLUT(const std::vector<std::string> &LUTfiles, const std::ve
     this->camera_2->LoadLUT(LUTfiles[1],LUTtype[1]);
 }
 
-void OmniCamera::MergeLUTWrap(cv::Size size)
+void OmniCamera::MergeLUTWrap()
 {
+    if(this->camera_1->_LUTsphere.empty() || this->camera_2->_LUTsphere.empty())
+    {
+        this->camera_1->Im2Sph(this->camera_1->_cameraParam.imSize.rows,this->camera_1->_cameraParam.imSize.cols);
+        this->camera_2->Im2Sph(this->camera_2->_cameraParam.imSize.rows,this->camera_2->_cameraParam.imSize.cols);
 
-    if(this->camera_1->_LUT_wrap_im.empty() || this->camera_2->_LUT_wrap_im.empty()) return;
+        this->ApplyBaseline();
 
-    cv::Mat tmp;
-
-    cv::hconcat(this->camera_1->_LUT_wrap_im,this->camera_2->_LUT_wrap_im,tmp);
+        this->MergeLUTSph();
+    }
+    if (this->_LUT_wrap_im.empty())
+    {
+        this->Sph2Pano();
+    }
 
     this->camera_1->ReleaseLut();
     this->camera_2->ReleaseLut();
-
-    double min,max;
-
-    for (int i = 0; i<2; i++)
-    {
-        cv::minMaxLoc(tmp.row(i),&min,&max);
-
-        tmp.row(i).convertTo(this->_LUT_wrap_im.row(i), CV_16UC1
-                             ,(double)(size.width/(max-min)),(double)(- (min * (size.width/(max-min)))));
-    }
 }
 
 void OmniCamera::MergeLUTSph()
@@ -186,26 +196,20 @@ void OmniCamera::StitchImage(int INPAIN_FLAG)
     cv::Mat mask_inpaint = cv::Mat::zeros(this->_panoSize, 0);
     mask_inpaint += 255;
 
-    int row_ind = 0;
-    int col_ind = 0;
-
     int pix_im1 = this->camera_1->_cameraParam.imSize.cols * this->camera_1->_cameraParam.imSize.rows;
 
     cv::Mat im_val = this->camera_1->_Frame;
 
     cv::Mat im_mask = this->camera_1->_Mask;
 
-    const cv::Vec3b *ptr_pix;
-    ptr_pix = im_val.ptr<cv::Vec3b>(row_ind) + col_ind;
+    int _cross_ind_row = 0;
+    int _cross_ind_col = 0;
 
-//    cv::Vec3b *ptr_pano;
-
-    const uchar *ptr_mask;
-    ptr_mask = im_mask.ptr<uchar>(row_ind) + col_ind;
+    MatInfo(this->_LUT_wrap_im,"this->_LUT_wrap_im");
 
     for (int i = 0; i < this->_LUT_wrap_im.cols; i++)
     {
-        if(*ptr_mask > 0)
+        if(im_mask.at<uchar>(_cross_ind_row,_cross_ind_col) > 0)
         {
 
 //            ptr_pano = &this->_pano.at<cv::Vec3b>(this->_LUT_wrap_im.at<unsigned short>(1,i),this->_LUT_wrap_im.at<unsigned short>(0,i));
@@ -216,36 +220,35 @@ void OmniCamera::StitchImage(int INPAIN_FLAG)
 
 //            }else{
 
-                this->_pano.at<cv::Vec3b>(this->_LUT_wrap_im.at<unsigned short>(1,i),this->_LUT_wrap_im.at<unsigned short>(0,i)) = *ptr_pix;
+//            std::cout<<"i : "<<i<<" row : "<< this->_LUT_wrap_im.at<unsigned short>(0,i)<<" col : "<<this->_LUT_wrap_im.at<unsigned short>(1,i)<<std::endl;
+
+                this->_pano.at<cv::Vec3b>(this->_LUT_wrap_im.at<unsigned short>(0,i),this->_LUT_wrap_im.at<unsigned short>(1,i)) = //*ptr_pix;
+                    im_val.at<cv::Vec3b>(_cross_ind_row,_cross_ind_col);
+
 //            }
 
 
-            if (INPAIN_FLAG) mask_inpaint.at<uchar>(this->_LUT_wrap_im.at<unsigned short>(1,i),this->_LUT_wrap_im.at<unsigned short>(0,i)) = 0;
+            if (INPAIN_FLAG) mask_inpaint.at<uchar>(this->_LUT_wrap_im.at<unsigned short>(0,i),this->_LUT_wrap_im.at<unsigned short>(1,i)) = 0;
 
         }
+        _cross_ind_row++;
 
-        row_ind++;
-
-        if (row_ind == im_val.rows)
+        if (_cross_ind_row == im_val.rows)
         {
-            row_ind = 0;
-            col_ind++;
+            _cross_ind_row = 0;
+            _cross_ind_col++;
         }
 
         if (i == pix_im1-1)
         {
             im_val = this->camera_2->_Frame;
             im_mask = this->camera_2->_Mask;
-            row_ind = 0;
-            col_ind = 0;
+            _cross_ind_row = 0;
+            _cross_ind_col = 0;
         }
-
-        ptr_pix = im_val.ptr<cv::Vec3b>(row_ind) + col_ind;
-        ptr_mask = im_mask.ptr<uchar>(row_ind) + col_ind;
     }
 
     cv::inpaint(this->_pano,mask_inpaint,this->_pano,5,cv::INPAINT_TELEA);
-
 }
 
 
@@ -480,10 +483,8 @@ int OmniCamera::CompLUTsampSph2Im(int bandwidth)
 
     if (!this->_LUTsph_im.empty()) return this->_ind_LUTsph;
 
-    cv::Mat sphGrid;
-    cv::Mat imGrid;
-    cv::Mat subMatSph;
-    cv::Mat subMatIm;
+    cv::Mat sphGrid, imGrid;
+    cv::Mat subMatSph, subMatIm;
 
     this->GetSphSampGrid(bandwidth,sphGrid);
 
@@ -495,7 +496,7 @@ int OmniCamera::CompLUTsampSph2Im(int bandwidth)
     {
         mat_it++;
         ind++;
-    }while(*mat_it < (mypi/2));
+    }while(*mat_it < (mypi/2.));
 
     this->_ind_LUTsph = ind;
 
@@ -517,7 +518,7 @@ int OmniCamera::CompLUTsampSph2Im(int bandwidth)
     subMatSph = sphGrid(cv::Rect(ind,0,sphGrid.cols-ind,3));
     subMatIm = imGrid(cv::Rect(ind,0,sphGrid.cols-ind,2));
 
-    RotateCloudPoint(subMatSph,0.,180.,0.);
+    RotateCloudPoint(subMatSph,180.,0.,0.);
 
     this->camera_2->Sph2Im(subMatSph,subMatIm);
 
@@ -530,38 +531,85 @@ int OmniCamera::CompLUTsampSph2Im(int bandwidth)
 void OmniCamera::SampSphFct(cv::Mat &sampFct, int bandwidth)
 {
     if (!this->IsInit()) return;
-    if (this->camera_1->_Frame.empty() || this->camera_2->_Frame.empty()) return;
+//    if (this->camera_1->_Frame.empty() || this->camera_2->_Frame.empty()) return;
 
-    int ind = CompLUTsampSph2Im(bandwidth);
+//    int ind = CompLUTsampSph2Im(bandwidth);
 
-    sampFct = cv::Mat::zeros(1,this->_LUTsph_im.cols,CV_64F);
+//    sampFct = cv::Mat::zeros(1,this->_LUTsph_im.cols,CV_64F);
 
-    cv::Mat grayIm;
+//    cv::Mat grayIm;
 
-    if (this->camera_1->_Frame.channels() == 3)
-    {
-        cv::cvtColor(this->camera_1->_Frame,grayIm,CV_BGR2GRAY);
-    }else{
-        grayIm = this->camera_1->_Frame;
-    }
+//    if (this->camera_1->_Frame.channels() == 3)
+//    {
+//        cv::cvtColor(this->camera_1->_Frame,grayIm,CV_BGR2GRAY);
+//    }else{
+//        grayIm = this->camera_1->_Frame;
+//    }
 
-    for (int i=0 ; i<this->_LUTsph_im.cols ; i++)
-    {
-//        std::cout<<"Ind : " << this->_LUTsph_im.at<int>(0,i)<<" "<<this->_LUTsph_im.at<int>(1,i)<<" val : "
-//                <<(double)(grayIm.at<uchar>(this->_LUTsph_im.at<int>(0,i),this->_LUTsph_im.at<int>(1,i)))<<std::endl;
+//    for (int i=0 ; i<this->_LUTsph_im.cols ; i++)
+//    {
+////        std::cout<<"Ind : " << this->_LUTsph_im.at<int>(0,i)<<" "<<this->_LUTsph_im.at<int>(1,i)<<" val : "
+////                <<(double)(grayIm.at<uchar>(this->_LUTsph_im.at<int>(0,i),this->_LUTsph_im.at<int>(1,i)))<<std::endl;
 
-        sampFct.at<double>(0,i) = (double)(grayIm.at<uchar>(this->_LUTsph_im.at<int>(0,i),this->_LUTsph_im.at<int>(1,i)));
+//        sampFct.at<double>(0,i) = (double)(grayIm.at<uchar>(this->_LUTsph_im.at<int>(0,i),this->_LUTsph_im.at<int>(1,i)));
 
-        if (i == (ind-1))
-        {
-            if (this->camera_2->_Frame.channels() == 3)
-            {
-                cv::cvtColor(this->camera_2->_Frame,grayIm,CV_BGR2GRAY);
-            }else{
-                grayIm = this->camera_2->_Frame;
-            }
-        }
-    }
+//        if (i == (ind-1))
+//        {
+//            if (this->camera_2->_Frame.channels() == 3)
+//            {
+//                cv::cvtColor(this->camera_2->_Frame,grayIm,CV_BGR2GRAY);
+//            }else{
+//                grayIm = this->camera_2->_Frame;
+//            }
+//        }
+//    }
+
+    if (this->_pano.empty()) return;
+
+    cv::Mat tmp;
+    double min, max;
+    cv::Size gridSize;
+
+    gridSize.height = bandwidth*2;
+    gridSize.width = bandwidth*2;
+
+    cv::cvtColor(this->_pano,tmp,CV_BGR2GRAY);
+
+    tmp.convertTo(tmp ,CV_64F);
+
+    cv::minMaxLoc(tmp,&min,&max);
+
+    tmp -= min;
+    tmp /= max;
+
+    tmp /= cv::norm(tmp);
+
+    cv::resize(tmp,sampFct,gridSize);
 }
 
 
+void OmniCamera::Sph2Pano()
+{
+    if (!this->IsInit()) return;
+    if (this->_LUTsphere.empty()) return;
+
+    double min,max;
+
+    cv::Mat tmp;
+
+    this->Rotate90roll();
+
+    Cart2Sph(this->_LUTsphere, tmp);
+
+    this->_LUT_wrap_im = cv::Mat::zeros(tmp.size(),CV_16UC1);
+
+    cv::minMaxLoc(tmp.row(0),&min,&max);
+
+    tmp.row(0).convertTo(this->_LUT_wrap_im.row(0), CV_16UC1
+                             ,(double)(this->_panoSize.height/(max-min)),(double)(- (min * (this->_panoSize.height/(max-min)))));
+
+    cv::minMaxLoc(tmp.row(1),&min,&max);
+
+    tmp.row(1).convertTo(this->_LUT_wrap_im.row(1), CV_16UC1
+                             ,(double)(this->_panoSize.width/(max-min)),(double)(- (min * (this->_panoSize.width/(max-min)))));
+}

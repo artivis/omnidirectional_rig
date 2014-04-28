@@ -1,5 +1,46 @@
 #include <omni_camera.h>
 
+OmniCamera::OmniCamera(const std::string &packPath)
+{
+
+    std::vector<std::string> path_yamls_cam;
+    std::vector<std::string> topics_name;
+    std::string maskCamera_1;
+    std::string maskCamera_2;
+    std::string extrinParam;
+
+    path_yamls_cam.push_back(("etc/calib/Pal_intrinsicParam_cam1.yaml"));
+    path_yamls_cam.push_back(("etc/calib/Pal_intrinsicParam_cam2.yaml"));
+
+    maskCamera_1  = ("etc/images/cam1/Img_mask1.jpg");
+    maskCamera_2  = ("etc/images/cam2/Img_mask2.jpg");
+
+    topics_name.push_back(("/left/image_raw"));
+    topics_name.push_back(("/right/image_raw"));
+
+    extrinParam = ("etc/calib/Pal_extrinsicParam.yaml");
+
+    this->camera_1 = new FishEye(topics_name.at(0),path_yamls_cam.at(0));
+
+    this->camera_2 = new FishEye(topics_name.at(1),path_yamls_cam.at(1));
+
+    this->LoadCalibration(extrinParam);
+
+    this->camera_1->LoadMask(maskCamera_1);
+    this->camera_2->LoadMask(maskCamera_2);
+
+    this->_panoSize = cv::Size(1200,400);
+
+    this->_isSampled = false;
+
+    this->_sampling_ratio = 1;
+
+    this->_ind_LUTsph = 0;
+
+    this->_init = this->camera_1->IsInit() && this->camera_2->IsInit() && true;
+
+}
+
 
 OmniCamera::OmniCamera(const std::vector<std::string> &topicsName, const std::vector<std::string> &cameraParamPath)
 {
@@ -10,13 +51,23 @@ OmniCamera::OmniCamera(const std::vector<std::string> &topicsName, const std::ve
 
     this->_panoSize = cv::Size(1200,400);
 
-    this->_init = false;
+    cv::Mat extrin = cv::Mat::zeros(3,4,CV_32F);
+
+    extrin(cv::Rect(0,0,3,3)) = GetRotationMat(0,180,0);
+
+    extrin.at<float>(0,3) = 0.;
+    extrin.at<float>(1,3) = 0.;
+    extrin.at<float>(2,3) = 0.;
+
+    extrin.copyTo(this->_extrin,CV_32F);
 
     this->_isSampled = false;
 
     this->_sampling_ratio = 1;
 
     this->_ind_LUTsph = 0;
+
+    this->_init = this->camera_1->IsInit() && this->camera_2->IsInit() && true;
 }
 
 OmniCamera::OmniCamera(const std::vector<std::string> &topicsName, const std::vector<std::string> &cameraParamPath, const std::string &extrinPath)
@@ -67,6 +118,12 @@ bool OmniCamera::LoadCalibration(const std::string& paramPath){
     return true;
 }
 
+void OmniCamera::ReadFrame()
+{
+    this->camera_1->ReadFrame();
+    this->camera_2->ReadFrame();
+}
+
 
 void OmniCamera::DispParam(){
 
@@ -112,10 +169,7 @@ void OmniCamera::SetPanoSize(cv::Size &panoSize)
 
 void OmniCamera::SetPanoSize(int rows, int cols)
 {
-    cv::Size panoSize;
-    panoSize.height = rows;
-    panoSize.width = cols;
-    this->_panoSize = panoSize;
+    this->_panoSize = cv::Size(cols,rows);
 }
 
 void OmniCamera::LoadLUT(const std::vector<std::string> &LUTfiles, const std::vector<std::string> &LUTtype)
@@ -531,39 +585,6 @@ int OmniCamera::CompLUTsampSph2Im(int bandwidth)
 void OmniCamera::SampSphFct(cv::Mat &sampFct, int bandwidth)
 {
     if (!this->IsInit()) return;
-//    if (this->camera_1->_Frame.empty() || this->camera_2->_Frame.empty()) return;
-
-//    int ind = CompLUTsampSph2Im(bandwidth);
-
-//    sampFct = cv::Mat::zeros(1,this->_LUTsph_im.cols,CV_64F);
-
-//    cv::Mat grayIm;
-
-//    if (this->camera_1->_Frame.channels() == 3)
-//    {
-//        cv::cvtColor(this->camera_1->_Frame,grayIm,CV_BGR2GRAY);
-//    }else{
-//        grayIm = this->camera_1->_Frame;
-//    }
-
-//    for (int i=0 ; i<this->_LUTsph_im.cols ; i++)
-//    {
-////        std::cout<<"Ind : " << this->_LUTsph_im.at<int>(0,i)<<" "<<this->_LUTsph_im.at<int>(1,i)<<" val : "
-////                <<(double)(grayIm.at<uchar>(this->_LUTsph_im.at<int>(0,i),this->_LUTsph_im.at<int>(1,i)))<<std::endl;
-
-//        sampFct.at<double>(0,i) = (double)(grayIm.at<uchar>(this->_LUTsph_im.at<int>(0,i),this->_LUTsph_im.at<int>(1,i)));
-
-//        if (i == (ind-1))
-//        {
-//            if (this->camera_2->_Frame.channels() == 3)
-//            {
-//                cv::cvtColor(this->camera_2->_Frame,grayIm,CV_BGR2GRAY);
-//            }else{
-//                grayIm = this->camera_2->_Frame;
-//            }
-//        }
-//    }
-
     if (this->_pano.empty()) return;
 
     cv::Mat tmp;

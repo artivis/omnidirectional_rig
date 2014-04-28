@@ -2,6 +2,7 @@
 #define OMNI_CAMERA_H
 
 #include <fisheye.h>
+#include <feature_extractor.h>
 
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/photo/photo.hpp"
@@ -19,7 +20,7 @@ class OmniCamera {
         FishEye *camera_1;
         FishEye *camera_2;
 
-        OmniCamera();
+        OmniCamera(const std::string &);
         OmniCamera(const std::vector<std::string> &topicsName, const std::vector<std::string> &paramPath);
 
         OmniCamera(const std::vector<std::string> &topicsName, const std::vector<std::string> &cameraParamPath,
@@ -49,7 +50,7 @@ class OmniCamera {
 
         void PartiallyFillMess(sensor_msgs::PointCloud &);
 
-        void Rotate90roll();
+        void ReadFrame();
 
         bool IsInit();
 
@@ -79,6 +80,8 @@ class OmniCamera {
         void GetHemiSphSampGrid(cv::Mat &pts,int bandwidth);
 
     private :
+
+        void Rotate90roll();
 
         cv::Mat _extrin;
 

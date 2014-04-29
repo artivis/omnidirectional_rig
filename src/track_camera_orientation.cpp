@@ -13,6 +13,10 @@ int main(int argc, char** argv){
 
     ros::init(argc,argv, "track_camera_orientation");
 
+    double time;
+
+    cv::Vec3f rotation;
+
     std::string im_cam1;
     std::string im_cam2;
 
@@ -22,8 +26,8 @@ int main(int argc, char** argv){
 //    im_cam2 = "etc/images/rot_left_frame0000.jpg";
 //    im_cam1 = "etc/images/rot_right_frame0000.jpg";
 
-    im_cam2 = "/home/student/JeremieDeray/rosbag/left/frame0000.jpg";
-    im_cam1 = "/home/student/JeremieDeray/rosbag/right/frame0000.jpg";
+    im_cam2 = "/home/student/JeremieDeray/rosbag/left/frame0048.jpg";
+    im_cam1 = "/home/student/JeremieDeray/rosbag/right/frame0048.jpg";
 
     OmniCamera omniSys("");
 
@@ -46,14 +50,16 @@ int main(int argc, char** argv){
 
     cv::Mat sampSphFunc1, sampSphFunc2;
 
-    int bwIn = 32;
+    int bwIn = 16;
 
     sampSphFunc1 = omniSys.GetPano();
 
     omniSys.SampSphFct(sampSphFunc1,bwIn);
 
-    im_cam2 = "/home/student/JeremieDeray/rosbag/left/frame0048.jpg";
-    im_cam1 = "/home/student/JeremieDeray/rosbag/right/frame0048.jpg";
+    time = (double)cv::getTickCount();
+
+    im_cam2 = "/home/student/JeremieDeray/rosbag/left/frame0000.jpg";
+    im_cam1 = "/home/student/JeremieDeray/rosbag/right/frame0000.jpg";
 
     omniSys.camera_1->readImage(im_cam1);
     omniSys.camera_2->readImage(im_cam2);
@@ -71,18 +77,21 @@ int main(int argc, char** argv){
 
 //    return 10;
 
-    cv::Vec3f rotation;
+
 
     SOFTWRAPP::WrapSphCorr2(bwIn,sampSphFunc1,sampSphFunc2,rotation);
 
     SOFTWRAPP::DispRotEst(rotation);
 
+    std::cout << "time to correlate : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
+
     return -2;
 
+    Eigen::Matrix tt;
 
 
 
-    double time;
+
 
     do
     {

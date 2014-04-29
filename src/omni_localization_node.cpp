@@ -19,29 +19,16 @@ int main(int argc, char** argv){
 
     //ros::Publisher pub_CloudSph = nh.advertise<sensor_msgs::PointCloud>(cloudPtTopic,1);
 
-    std::vector<std::string> path_yamls_cam;
-    std::vector<std::string> topics_name;
+
+    OmniCamera omniSys("");
+
+
     std::string im_cam1;
     std::string im_cam2;
-    std::string maskCamera_1;
-    std::string maskCamera_2;
-    std::string extrinParam;
 
-    path_yamls_cam.push_back("etc/calib/Pal_intrinsicParam_cam1.yaml");
-    path_yamls_cam.push_back("etc/calib/Pal_intrinsicParam_cam2.yaml");
 
     im_cam1 = "etc/images/cam1/left_frame0000.jpg";
     im_cam2 = "etc/images/cam2/right_frame0000.jpg";
-
-    maskCamera_1  = "etc/images/cam1/Img_mask1.jpg";
-    maskCamera_2  = "etc/images/cam2/Img_mask2.jpg";
-
-    topics_name.push_back("/left/image_raw");
-    topics_name.push_back("/right/image_raw");
-
-    extrinParam = "etc/calib/Pal_extrinsicParam.yaml";
-
-    OmniCamera omniSys(topics_name,path_yamls_cam,extrinParam);
 
 
     pal::slam::FeatureVector featurevector_cam1;
@@ -51,17 +38,18 @@ int main(int argc, char** argv){
 
     omniSys.DispParam();
 
-    omniSys.camera_1->LoadMask(maskCamera_1);
-    omniSys.camera_2->LoadMask(maskCamera_2);
-
 
 
     do
     {
         omniSys.ReadFrame();
+        omniSys.camera_1->readImage(im_cam1);
+        omniSys.camera_2->readImage(im_cam2);
 
         featurevector_cam1 = featureExtractor.processImage(omniSys.camera_1->getImage());
         featurevector_cam2 = featureExtractor.processImage(omniSys.camera_2->getImage());
+
+
 
         ros::spinOnce();
 

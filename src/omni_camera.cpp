@@ -259,8 +259,6 @@ void OmniCamera::StitchImage(int INPAIN_FLAG)
     int _cross_ind_row = 0;
     int _cross_ind_col = 0;
 
-    MatInfo(this->_LUT_wrap_im,"this->_LUT_wrap_im");
-
     for (int i = 0; i < this->_LUT_wrap_im.cols; i++)
     {
         if(im_mask.at<uchar>(_cross_ind_row,_cross_ind_col) > 0)

@@ -5,11 +5,11 @@
 
 #include <fftw3.h>
 
-//#include <soft20/makeweights.h>
-//#include <soft20/s2_primitive.h>
-//#include <soft20/s2_cospmls.h>
+#include <soft20/makeweights.h>
+#include <soft20/s2_primitive.h>
+#include <soft20/s2_cospmls.h>
 
-//#include <soft20/s2_semi_memo.h>
+#include <soft20/s2_semi_memo.h>
 
 #include <soft20/wrap_fftw.h>
 
@@ -44,6 +44,8 @@ void SOFTWRAPP::WrapSphCorr2(int bw, const cv::Mat &sphPattern, const cv::Mat &s
     if ( (signal == NULL) || (pattern == NULL) )
     {
         perror("Error in allocating memory");
+        free( pattern );
+        free( signal ) ;
         return;
     }
 
@@ -197,140 +199,131 @@ void SOFTWRAPP::HarmDesc(const harmCoeff &coeff, std::vector< double > &descript
 }
 
 
-void blarg()
+void SOFTWRAPP::WrapSphHarm(int bw, const cv::Mat &signal, harmCoeff &coeff)
 {
-//    Reduced_Naive_TableSize(0, 0);
+    int i, j, l, m, n, dummy;
+
+    int isReal = 1;
+
+    double *tmpR, *tmpI ;
+    double *workspace3 ;
+    fftw_complex *workspace2  ;
+    double *sigCoefR, *sigCoefI ;
+    double *weights ;
+    double *seminaive_naive_tablespace ;
+    double **seminaive_naive_table ;
+    fftw_plan dctPlan, fftPlan ;
+
+    int rank, howmany_rank;
+    fftw_iodim dims[1], howmany_dims[1];
+
+    std::complex<double> tmp_deg;
+    std::vector< std::complex<double> > tmp_ord;
+
+    coeff.clear();
+
+    n = 2 * bw ;
+
+    tmpR = new double[n*n];
+    tmpI = new double[n*n];
+    workspace2 = (fftw_complex *) malloc( sizeof(fftw_complex) * ((14*bw*bw) + (48 * bw)));
+    sigCoefR = new double[bw*bw];
+    sigCoefI = new double[bw*bw];
+
+
+    seminaive_naive_tablespace = (double *) malloc(sizeof(double) *
+                                 (Reduced_Naive_TableSize(bw,bw) +
+                                  Reduced_SpharmonicTableSize(bw,bw)));  // blarg
+
+    weights = (double *) malloc(sizeof(double) * (4*bw));
+
+    /****
+        At this point, check to see if all the memory has been
+        allocated. If it has not, there's no point in going further.
+    ****/
+
+    if ( (seminaive_naive_tablespace == NULL) ||
+         (tmpR == NULL) || ( tmpI == NULL) ||
+         (weights == NULL) || (workspace2 == NULL) ||
+         (sigCoefR == NULL) || (sigCoefI == NULL) )
+    {
+        perror("Error in allocating memory");
+        exit( 1 ) ;
+    }
+
+
+    /* create fftw plans for the S^2 transforms */
+    /* first for the dct */
+    dctPlan = fftw_plan_r2r_1d( 2*bw, weights, workspace3,
+                      FFTW_REDFT10, FFTW_ESTIMATE ) ;
+
+    makeweights( bw, weights ) ; // OK
+
+    rank = 1 ;
+      dims[0].n = 2*bw ;
+      dims[0].is = 1 ;
+      dims[0].os = 2*bw ;
+      howmany_rank = 1 ;
+      howmany_dims[0].n = 2*bw ;
+      howmany_dims[0].is = 2*bw ;
+      howmany_dims[0].os = 1 ;
+
+    fftPlan = fftw_plan_guru_split_dft( rank, dims,
+                          howmany_rank, howmany_dims,
+                          tmpR, tmpI,
+                          (double *) workspace2,
+                          (double *) workspace2 + (n*n),
+                          FFTW_ESTIMATE );
+
+    seminaive_naive_table = SemiNaive_Naive_Pml_Table(bw, bw,
+                                seminaive_naive_tablespace,
+                                (double *) workspace2);
+
+    /* load SIGNAL samples into temp array */
+
+    for (i = 0 ; i < signal.rows ; i++ )
+    {
+        for (j = 0 ; j < signal.cols ; j++ )
+        {
+            tmpR[i] = signal.at<float>(i,j) ;
+            tmpI[i] = 0. ;
+        }
+    }
+
+
+    /* spherical transform of SIGNAL */
+    FST_semi_memo( tmpR, tmpI,
+                   sigCoefR, sigCoefI,
+                   bw, seminaive_naive_table,
+                   (double *) workspace2, isReal, bw,
+                   &dctPlan, &fftPlan,
+                   weights );  // blarg
+
+
+    for(l = 0 ; l < bw ; l++ )
+    {
+        for(m = -l; m < l+1 ; m++ )
+        {
+            dummy = seanindex(m,l,bw);  // OK
+            tmp_deg.real(sigCoefR[dummy]);
+            tmp_deg.imag(   sigCoefI[dummy]);
+            tmp_ord.push_back(tmp_deg);
+        }
+        coeff.push_back(tmp_ord);
+        tmp_ord.clear();
+    }
+
+
+    free( seminaive_naive_table ) ;
+    free( seminaive_naive_tablespace ) ;
+
+    delete[] sigCoefI;
+    delete[] sigCoefR;
+    free( workspace2 );
+
+    delete[] tmpI;
+    delete[] tmpR;
 }
-
-
-//void SOFTWRAPP::WrapSphHarm(int bw, const cv::Mat &signal, harmCoeff &coeff)
-//{
-//    int i, j, l, m, n, dummy;
-
-//    int isReal = 1;
-
-//    double *tmpR, *tmpI ;
-//    double *workspace3 ;
-//    fftw_complex *workspace2  ;
-//    double *sigCoefR, *sigCoefI ;
-//    double *weights ;
-//    double *seminaive_naive_tablespace ;
-//    double **seminaive_naive_table ;
-//    fftw_plan dctPlan, fftPlan ;
-
-//    int rank, howmany_rank;
-//    fftw_iodim dims[1], howmany_dims[1];
-
-//    std::complex<double> tmp_deg;
-//    std::vector< std::complex<double> > tmp_ord;
-
-//    std::cout << "I will now crash, good night.";
-//    *((int *)0) = 0;
-
-//    coeff.clear();
-
-//    n = 2 * bw ;
-
-//    tmpR = new double[n*n];
-//    tmpI = (double *) malloc( sizeof(double) * ( n * n ) );
-//    workspace2 = (fftw_complex *) malloc( sizeof(fftw_complex) * ((14*bw*bw) + (48 * bw)));
-//    sigCoefR = (double *) malloc( sizeof(double) * bw * bw ) ;
-//    sigCoefI = (double *) malloc( sizeof(double) * bw * bw ) ;
-
-
-//    seminaive_naive_tablespace = (double *) malloc(sizeof(double) *
-//                                 (Reduced_Naive_TableSize(bw,bw) +
-//                                  Reduced_SpharmonicTableSize(bw,bw)));  // blarg
-
-//    weights = (double *) malloc(sizeof(double) * (4*bw));
-
-//    /****
-//        At this point, check to see if all the memory has been
-//        allocated. If it has not, there's no point in going further.
-//    ****/
-
-//    if ( (seminaive_naive_tablespace == NULL) ||
-//         (tmpR == NULL) || ( tmpI == NULL) ||
-//         (weights == NULL) || (workspace2 == NULL) ||
-//         (sigCoefR == NULL) || (sigCoefI == NULL) )
-//    {
-//        perror("Error in allocating memory");
-//        exit( 1 ) ;
-//    }
-
-
-//    /* create fftw plans for the S^2 transforms */
-//    /* first for the dct */
-//    dctPlan = fftw_plan_r2r_1d( 2*bw, weights, workspace3,
-//                      FFTW_REDFT10, FFTW_ESTIMATE ) ;  // OK
-
-//    makeweights( bw, weights ) ; // OK
-
-//    rank = 1 ;
-//      dims[0].n = 2*bw ;
-//      dims[0].is = 1 ;
-//      dims[0].os = 2*bw ;
-//      howmany_rank = 1 ;
-//      howmany_dims[0].n = 2*bw ;
-//      howmany_dims[0].is = 2*bw ;
-//      howmany_dims[0].os = 1 ;
-
-//    fftPlan = fftw_plan_guru_split_dft( rank, dims,
-//                          howmany_rank, howmany_dims,
-//                          tmpR, tmpI,
-//                          (double *) workspace2,
-//                          (double *) workspace2 + (n*n),
-//                          FFTW_ESTIMATE );  // OK
-
-////    seminaive_naive_table = SemiNaive_Naive_Pml_Table(bw, bw,
-////                                seminaive_naive_tablespace,
-////                                (double *) workspace2);  // blarg
-
-//    /* load SIGNAL samples into temp array */
-
-//    for (i = 0 ; i < signal.rows ; i++ )
-//    {
-//        for (j = 0 ; j < signal.cols ; j++ )
-//        {
-//            tmpR[i] = signal.at<float>(i,j) ;
-//            tmpI[i] = 0. ;
-//        }
-//    }
-
-
-//    /* spherical transform of SIGNAL */
-////    FST_semi_memo( tmpR, tmpI,
-////                   sigCoefR, sigCoefI,
-////                   bw, seminaive_naive_table,
-////                   (double *) workspace2, isReal, bw,
-////                   &dctPlan, &fftPlan,
-////                   weights );  // blarg
-
-
-//    for(l = 0 ; l < bw ; l++ )
-//    {
-//        for(m = -l; m < l+1 ; m++ )
-//        {
-//            dummy = seanindex(m,l,bw);  // OK
-//            tmp_deg.real(sigCoefR[dummy]);
-//            tmp_deg.imag(   sigCoefI[dummy]);
-//            tmp_ord.push_back(tmp_deg);
-//        }
-//        coeff.push_back(tmp_ord);
-//        tmp_ord.clear();
-//    }
-
-
-//    free( seminaive_naive_table ) ;
-//    free( seminaive_naive_tablespace ) ;
-
-//    free( sigCoefI );
-//    free( sigCoefR );
-//    free( workspace2 );
-
-//    free( tmpI );
-//    delete[] tmpR;
-//}
 
 
 

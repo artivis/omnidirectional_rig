@@ -20,12 +20,6 @@ int main(int argc, char** argv){
     std::string im_cam1;
     std::string im_cam2;
 
-//    im_cam2 = "etc/images/left_frame0000.jpg";
-//    im_cam1 = "etc/images/right_frame0000.jpg";
-
-//    im_cam2 = "etc/images/rot_left_frame0000.jpg";
-//    im_cam1 = "etc/images/rot_right_frame0000.jpg";
-
     im_cam2 = "/home/student/JeremieDeray/rosbag/left/frame0048.jpg";
     im_cam1 = "/home/student/JeremieDeray/rosbag/right/frame0048.jpg";
 
@@ -87,7 +81,6 @@ int main(int argc, char** argv){
 
     return -2;
 
-    Eigen::Matrix tt;
 
 
 

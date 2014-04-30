@@ -28,6 +28,8 @@ void Cart2Sph(const cv::Mat&, cv::Mat&, int rad_flag = 0);
 
 void Sph2Cart(const cv::Mat&, cv::Mat &);
 
+void Sph2Heal(const cv::Mat&, cv::Mat &);
+
 void MeshGrid(const cv::Mat&, const cv::Mat&, cv::Mat&, cv::Mat&);
 
 void RotateCloudPoint(cv::Mat&,double,double,double, bool rad = false);

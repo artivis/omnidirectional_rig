@@ -184,7 +184,29 @@ void OmniCamera::LoadLUT(const std::vector<std::string> &LUTfiles, const std::ve
     this->camera_2->LoadLUT(LUTfiles[1],LUTtype[1]);
 }
 
-void OmniCamera::MergeLUTWrap()
+void OmniCamera::MergeLUTWrap(bool heal)
+{
+    if(this->camera_1->_LUTsphere.empty() || this->camera_2->_LUTsphere.empty())
+    {
+        this->camera_1->Im2Sph(this->camera_1->_cameraParam.imSize.rows,this->camera_1->_cameraParam.imSize.cols);
+        this->camera_2->Im2Sph(this->camera_2->_cameraParam.imSize.rows,this->camera_2->_cameraParam.imSize.cols);
+
+        this->ApplyBaseline();
+
+        this->MergeLUTSph();
+    }
+    if (this->_LUT_wrap_im.empty())
+    {
+        if(heal)
+        {
+            this->Sph2HealPano();
+        }else{
+            this->Sph2Pano();
+        }
+    }
+}
+
+void OmniCamera::MergeLUTHeal()
 {
     if(this->camera_1->_LUTsphere.empty() || this->camera_2->_LUTsphere.empty())
     {
@@ -199,9 +221,6 @@ void OmniCamera::MergeLUTWrap()
     {
         this->Sph2Pano();
     }
-
-    this->camera_1->ReleaseLut();
-    this->camera_2->ReleaseLut();
 }
 
 void OmniCamera::MergeLUTSph()
@@ -235,9 +254,9 @@ void OmniCamera::RescaleWrapLUT(cv::Size size)
     this->_pano = cv::Mat::zeros(size.height,size.width,this->_pano.type());
 }
 
-void OmniCamera::StitchImage(int INPAIN_FLAG)
+void OmniCamera::StitchImage(bool INPAIN_FLAG)
 {
-    if (!this->IsInit() || this->camera_1->_Frame.empty() || this->camera_2->_Frame.empty())
+    if (!this->IsInit() || this->camera_1->_Frame.empty() || this->camera_2->_Frame.empty() || this->_LUT_wrap_im.empty())
     {
         return;
     }
@@ -264,20 +283,8 @@ void OmniCamera::StitchImage(int INPAIN_FLAG)
         if(im_mask.at<uchar>(_cross_ind_row,_cross_ind_col) > 0)
         {
 
-//            ptr_pano = &this->_pano.at<cv::Vec3b>(this->_LUT_wrap_im.at<unsigned short>(1,i),this->_LUT_wrap_im.at<unsigned short>(0,i));
-
-//            if (cv::sum(*ptr_pano)[0] > 0)
-//            {
-//                *ptr_pano = (*ptr_pano + *ptr_pix)/2;
-
-//            }else{
-
-//            std::cout<<"i : "<<i<<" row : "<< this->_LUT_wrap_im.at<unsigned short>(0,i)<<" col : "<<this->_LUT_wrap_im.at<unsigned short>(1,i)<<std::endl;
-
-                this->_pano.at<cv::Vec3b>(this->_LUT_wrap_im.at<unsigned short>(0,i),this->_LUT_wrap_im.at<unsigned short>(1,i)) = //*ptr_pix;
-                    im_val.at<cv::Vec3b>(_cross_ind_row,_cross_ind_col);
-
-//            }
+            this->_pano.at<cv::Vec3b>(this->_LUT_wrap_im.at<unsigned short>(0,i),this->_LUT_wrap_im.at<unsigned short>(1,i)) = //*ptr_pix;
+            im_val.at<cv::Vec3b>(_cross_ind_row,_cross_ind_col);
 
 
             if (INPAIN_FLAG) mask_inpaint.at<uchar>(this->_LUT_wrap_im.at<unsigned short>(0,i),this->_LUT_wrap_im.at<unsigned short>(1,i)) = 0;
@@ -484,101 +491,6 @@ void OmniCamera::DownSample(int sampling_ratio)
     this->_sampling_ratio = sampling_ratio;
 }
 
-void OmniCamera::GetSphSampGrid(int bandwidth, cv::Mat &pts, bool ishemi){
-
-    cv::Mat theta = cv::Mat::zeros(1,2*bandwidth,CV_32FC1);
-    cv::Mat phi = cv::Mat::zeros(1,2*bandwidth,CV_32FC1);
-
-    cv::Mat theta_grid, phi_grid;
-
-    cv::MatIterator_<float> it_theta = theta.begin<float>(), it_theta_end = theta.end<float>(),
-            it_phi = phi.begin<float>();
-
-    int i = 0;
-
-    int hemi = (ishemi) ? 1 : 2;
-
-    for (;it_theta!=it_theta_end;it_theta++)
-    {
-        *it_theta = mypi*(hemi*i+1) / (4*bandwidth);
-
-        *it_phi = mypi*i / (bandwidth);
-
-        it_phi++;
-        i++;
-    }
-
-    MeshGrid(theta,phi,theta_grid,phi_grid);
-
-    cv::Mat tmp = theta_grid.t();
-
-    tmp.reshape(1,1).copyTo(theta_grid);
-
-    tmp = phi_grid.t();
-
-    tmp.reshape(1,1).copyTo(phi_grid);
-
-    cv::vconcat(theta_grid,phi_grid,pts);
-}
-
-
-void OmniCamera::GetHemiSphSampGrid(cv::Mat &pts,int bandwidth){
-
-    GetSphSampGrid(bandwidth, pts, true);
-
-}
-
-
-int OmniCamera::CompLUTsampSph2Im(int bandwidth)
-{
-    if (!this->IsInit()) return -1;
-
-    if (!this->_LUTsph_im.empty()) return this->_ind_LUTsph;
-
-    cv::Mat sphGrid, imGrid;
-    cv::Mat subMatSph, subMatIm;
-
-    this->GetSphSampGrid(bandwidth,sphGrid);
-
-    cv::MatIterator_<float> mat_it = sphGrid.begin<float>();
-
-    int ind = 0;
-
-    do
-    {
-        mat_it++;
-        ind++;
-    }while(*mat_it < (mypi/2.));
-
-    this->_ind_LUTsph = ind;
-
-    mat_it = sphGrid.end<float>();
-
-    imGrid = cv::Mat::zeros(2,sphGrid.cols,CV_32S);
-
-    cv::Mat tmp;
-
-    Sph2Cart(sphGrid,tmp);
-    tmp.copyTo(sphGrid);
-    tmp.release();
-
-    subMatSph = sphGrid(cv::Rect(0,0,ind,3));
-    subMatIm = imGrid(cv::Rect(0,0,ind,2));
-
-    this->camera_1->Sph2Im(subMatSph,subMatIm);
-
-    subMatSph = sphGrid(cv::Rect(ind,0,sphGrid.cols-ind,3));
-    subMatIm = imGrid(cv::Rect(ind,0,sphGrid.cols-ind,2));
-
-    RotateCloudPoint(subMatSph,180.,0.,0.);
-
-    this->camera_2->Sph2Im(subMatSph,subMatIm);
-
-    imGrid.convertTo(this->_LUTsph_im,CV_32S);
-
-    return ind;
-}
-
 
 void OmniCamera::SampSphFct(cv::Mat &sampFct, int bandwidth)
 {
@@ -630,5 +542,35 @@ void OmniCamera::Sph2Pano()
     cv::minMaxLoc(tmp.row(1),&min,&max);
 
     tmp.row(1).convertTo(this->_LUT_wrap_im.row(1), CV_16UC1
+                             ,(double)(this->_panoSize.width/(max-min)),(double)(- (min * (this->_panoSize.width/(max-min)))));
+}
+
+void OmniCamera::Sph2HealPano()
+{
+    if (!this->IsInit()) return;
+    if (this->_LUTsphere.empty()) return;
+
+    double min,max;
+
+    cv::Mat tmp, tmp2;
+
+    this->Rotate90roll();
+
+    Cart2Sph(this->_LUTsphere, tmp);
+
+    Sph2Heal(tmp,tmp2);
+
+    tmp.release();
+
+    this->_LUT_wrap_im = cv::Mat::zeros(tmp.size(),CV_16UC1);
+
+    cv::minMaxLoc(tmp2.row(0),&min,&max);
+
+    tmp2.row(0).convertTo(this->_LUT_wrap_im.row(0), CV_16UC1
+                             ,(double)(this->_panoSize.height/(max-min)),(double)(- (min * (this->_panoSize.height/(max-min)))));
+
+    cv::minMaxLoc(tmp2.row(1),&min,&max);
+
+    tmp2.row(1).convertTo(this->_LUT_wrap_im.row(1), CV_16UC1
                              ,(double)(this->_panoSize.width/(max-min)),(double)(- (min * (this->_panoSize.width/(max-min)))));
 }

@@ -6,7 +6,7 @@
 #include <vocabulary_tree/tree_builder.h>
 #include <sensor_msgs/Image.h>
 
-#include <siftfast/siftfast.h>
+#include <siftfast.h>
 
 #include <eigen3/Eigen/Core>
 

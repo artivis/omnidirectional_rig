@@ -34,13 +34,15 @@ class OmniCamera {
 
         void LoadLUT(const std::vector<std::string> &, const std::vector<std::string> &);
 
-        void MergeLUTWrap();
+        void MergeLUTWrap(bool heal = false);
+
+        void MergeLUTHeal();
 
         void MergeLUTSph();
 
         void RescaleWrapLUT(cv::Size size = cv::Size(1200,400));
 
-        void StitchImage(int INPAIN_FLAG = 0);
+        void StitchImage(bool INPAIN_FLAG = 0);
 
         void SaveImage(const std::string &filename = "panoramicImage.jpg");
 
@@ -55,29 +57,20 @@ class OmniCamera {
         bool IsInit();
 
         cv::Mat GetExtrin();
-
         cv::Mat GetPano();
-
         cv::Mat GetLUT();
 
         void SetExtrin(const cv::Mat &);
-
         void SetPanoSize(cv::Size &);
         void SetPanoSize(int,int);
 
         void DownSample(int sampling_ratio = 1);
 
-        void CompLUTWrap();
-
         void Sph2Pano();
 
-        int CompLUTsampSph2Im(int bandwidth = 64);
+        void Sph2HealPano();
 
         void SampSphFct(cv::Mat&, int bandwidth = 64);
-
-        void GetSphSampGrid(int bandwidth, cv::Mat &pts, bool ishemi = false);
-
-        void GetHemiSphSampGrid(cv::Mat &pts,int bandwidth);
 
     private :
 
@@ -93,6 +86,7 @@ class OmniCamera {
 
         cv::Mat _LUTsphere;
         cv::Mat _LUT_wrap_im;
+        cv::Mat _LUT_heal_wrap_im;
         cv::Mat _LUTsph_im;
 
         bool _isSampled;

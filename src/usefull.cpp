@@ -4,6 +4,11 @@
 
 void Cart2Sph(const cv::Mat& cart_coor, cv::Mat& sph_coor, int rad_flag )
 {
+    // Uses Physics convention (r,theta,phi)
+    // with r radial distance
+    // theta polar angle from Z axis (range 0 - PI)
+    // phi azimuthal angle in X-Y plan and from X axis (range 0 - 2PI)
+
     if (!cart_coor.rows==3)
     {
         return;
@@ -23,7 +28,7 @@ void Cart2Sph(const cv::Mat& cart_coor, cv::Mat& sph_coor, int rad_flag )
             y = cart_coor.at<float>(1,i);
             z = cart_coor.at<float>(2,i);
 
-            rad = sqrt( x*x + y*y + z*z ); //radius
+            rad = sqrt( x*x + y*y + z*z ); //r
             el = acos(z / rad); //elevation
             az = atan2(y,x); //azimmuth
 
@@ -66,6 +71,11 @@ void Sph2Cart(const cv::Mat &sph_pts, cv::Mat &cart_pts)
 {
     cv::Mat cart_pts_tmp = cv::Mat::zeros(3,sph_pts.cols,sph_pts.type());
 
+    // Uses Physics convention (r,theta,phi)
+    // with r radial distance
+    // theta polar angle from Z axis (range 0 - PI)
+    // phi azimuthal angle in X-Y plan and from X axis (range 0 - 2PI)
+
     if (sph_pts.rows == 2)
     {
         for (int i=0; i<sph_pts.cols; i++)
@@ -88,6 +98,55 @@ void Sph2Cart(const cv::Mat &sph_pts, cv::Mat &cart_pts)
     }
 
     cart_pts_tmp.convertTo(cart_pts,sph_pts.type());
+}
+
+void Sph2Heal(const cv::Mat &sph_pts, cv::Mat &healPts)
+{
+    float H = 4.;
+
+    float K = 3.;
+
+    float xi_c, phi_c, theta_c = std::asin(2./K);
+
+    cv::Mat healPts_tmp = cv::Mat::zeros(2,sph_pts.cols,CV_32F);
+
+    for (int i=0; i<sph_pts.cols; i++)
+    {
+
+        if( std::abs(sph_pts.at<float>(1,i)) < theta_c )
+        {
+
+            healPts_tmp.at<float>(0,i) = sph_pts.at<float>(0,i);
+
+            healPts_tmp.at<float>(1,i) = ((K*mypi)/(2.*H)) * std::sin(sph_pts.at<float>(1,i));
+
+
+        }else if( sph_pts.at<float>(1,i) > theta_c && sph_pts.at<float>(1,i) > 0 ){
+
+            xi_c = std::sqrt( K * (1. - std::abs( std::sin(sph_pts.at<float>(1,i)) ) ) );
+
+            phi_c = -mypi + ( 2. * std::floor( ((sph_pts.at<float>(0,i)+mypi)*H)/(2*mypi) ) + 1. ) * (mypi / H);
+
+            healPts_tmp.at<float>(0,i) = phi_c + (sph_pts.at<float>(0,i)-phi_c) * xi_c;
+
+            healPts_tmp.at<float>(1,i) = (mypi/H) * (2.-xi_c);
+
+
+        }else{
+
+            xi_c = std::sqrt( K * ( 1. - std::abs( std::sin( sph_pts.at<float>(1,i) ) ) ) );
+
+            phi_c = -mypi + ( 2. * std::floor( ((sph_pts.at<float>(0,i)+mypi)*H)/(2*mypi) ) + 1. ) * (mypi / H);
+
+            healPts_tmp.at<float>(0,i) = phi_c + (sph_pts.at<float>(0,i)-phi_c) * xi_c;
+
+            healPts_tmp.at<float>(1,i) = - (mypi/H) * (2.-xi_c);
+
+        }
+    }
+
+    healPts_tmp.convertTo(healPts,sph_pts.type());
+
 }
 
 std::string AddPath(const std::string &obj, const std::string &root)

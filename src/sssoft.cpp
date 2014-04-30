@@ -207,11 +207,11 @@ void SOFTWRAPP::WrapSphHarm(int bw, const cv::Mat &signal, harmCoeff &coeff)
 
     double *tmpR, *tmpI ;
     double *workspace3 ;
-    fftw_complex *workspace2  ;
     double *sigCoefR, *sigCoefI ;
     double *weights ;
     double *seminaive_naive_tablespace ;
     double **seminaive_naive_table ;
+    fftw_complex *workspace2  ;
     fftw_plan dctPlan, fftPlan ;
 
     int rank, howmany_rank;
@@ -224,18 +224,17 @@ void SOFTWRAPP::WrapSphHarm(int bw, const cv::Mat &signal, harmCoeff &coeff)
 
     n = 2 * bw ;
 
+    workspace2 = (fftw_complex *) malloc( sizeof(fftw_complex) * ((14*bw*bw) + (48 * bw)));
+
     tmpR = new double[n*n];
     tmpI = new double[n*n];
-    workspace2 = (fftw_complex *) malloc( sizeof(fftw_complex) * ((14*bw*bw) + (48 * bw)));
+    weights = new double[4*bw];
     sigCoefR = new double[bw*bw];
     sigCoefI = new double[bw*bw];
 
+    seminaive_naive_tablespace = new double[Reduced_Naive_TableSize(bw,bw) +
+                                            Reduced_SpharmonicTableSize(bw,bw)];
 
-    seminaive_naive_tablespace = (double *) malloc(sizeof(double) *
-                                 (Reduced_Naive_TableSize(bw,bw) +
-                                  Reduced_SpharmonicTableSize(bw,bw)));  // blarg
-
-    weights = (double *) malloc(sizeof(double) * (4*bw));
 
     /****
         At this point, check to see if all the memory has been
@@ -257,16 +256,16 @@ void SOFTWRAPP::WrapSphHarm(int bw, const cv::Mat &signal, harmCoeff &coeff)
     dctPlan = fftw_plan_r2r_1d( 2*bw, weights, workspace3,
                       FFTW_REDFT10, FFTW_ESTIMATE ) ;
 
-    makeweights( bw, weights ) ; // OK
+    makeweights( bw, weights ) ;
 
     rank = 1 ;
-      dims[0].n = 2*bw ;
-      dims[0].is = 1 ;
-      dims[0].os = 2*bw ;
-      howmany_rank = 1 ;
-      howmany_dims[0].n = 2*bw ;
-      howmany_dims[0].is = 2*bw ;
-      howmany_dims[0].os = 1 ;
+    dims[0].n = 2*bw ;
+    dims[0].is = 1 ;
+    dims[0].os = 2*bw ;
+    howmany_rank = 1 ;
+    howmany_dims[0].n = 2*bw ;
+    howmany_dims[0].is = 2*bw ;
+    howmany_dims[0].os = 1 ;
 
     fftPlan = fftw_plan_guru_split_dft( rank, dims,
                           howmany_rank, howmany_dims,
@@ -304,7 +303,7 @@ void SOFTWRAPP::WrapSphHarm(int bw, const cv::Mat &signal, harmCoeff &coeff)
     {
         for(m = -l; m < l+1 ; m++ )
         {
-            dummy = seanindex(m,l,bw);  // OK
+            dummy = seanindex(m,l,bw);
             tmp_deg.real(sigCoefR[dummy]);
             tmp_deg.imag(   sigCoefI[dummy]);
             tmp_ord.push_back(tmp_deg);
@@ -315,11 +314,13 @@ void SOFTWRAPP::WrapSphHarm(int bw, const cv::Mat &signal, harmCoeff &coeff)
 
 
     free( seminaive_naive_table ) ;
-    free( seminaive_naive_tablespace ) ;
+    free( workspace2 );
 
+    delete[] seminaive_naive_tablespace;
+
+    delete[] weights;
     delete[] sigCoefI;
     delete[] sigCoefR;
-    free( workspace2 );
 
     delete[] tmpI;
     delete[] tmpR;

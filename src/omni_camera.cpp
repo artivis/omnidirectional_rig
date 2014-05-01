@@ -283,12 +283,11 @@ void OmniCamera::StitchImage(bool INPAIN_FLAG)
         if(im_mask.at<uchar>(_cross_ind_row,_cross_ind_col) > 0)
         {
 
-            this->_pano.at<cv::Vec3b>(this->_LUT_wrap_im.at<unsigned short>(0,i),this->_LUT_wrap_im.at<unsigned short>(1,i)) = //*ptr_pix;
-            im_val.at<cv::Vec3b>(_cross_ind_row,_cross_ind_col);
+            this->_pano.at<cv::Vec3b>(this->_LUT_wrap_im.at<unsigned short>(0,i),this->_LUT_wrap_im.at<unsigned short>(1,i)) =
+                    im_val.at<cv::Vec3b>(_cross_ind_row,_cross_ind_col);
 
 
             if (INPAIN_FLAG) mask_inpaint.at<uchar>(this->_LUT_wrap_im.at<unsigned short>(0,i),this->_LUT_wrap_im.at<unsigned short>(1,i)) = 0;
-
         }
         _cross_ind_row++;
 
@@ -537,12 +536,12 @@ void OmniCamera::Sph2Pano()
     cv::minMaxLoc(tmp.row(0),&min,&max);
 
     tmp.row(0).convertTo(this->_LUT_wrap_im.row(0), CV_16UC1
-                             ,(double)(this->_panoSize.height/(max-min)),(double)(- (min * (this->_panoSize.height/(max-min)))));
+                         ,(double)((this->_panoSize.height-1)/(max-min)),(double)(- (min * ((this->_panoSize.height-1)/(max-min)))));
 
     cv::minMaxLoc(tmp.row(1),&min,&max);
 
     tmp.row(1).convertTo(this->_LUT_wrap_im.row(1), CV_16UC1
-                             ,(double)(this->_panoSize.width/(max-min)),(double)(- (min * (this->_panoSize.width/(max-min)))));
+                         ,(double)((this->_panoSize.width-1)/(max-min)),(double)(- (min * ((this->_panoSize.width-1)/(max-min)))));
 }
 
 void OmniCamera::Sph2HealPano()
@@ -562,15 +561,16 @@ void OmniCamera::Sph2HealPano()
 
     tmp.release();
 
-    this->_LUT_wrap_im = cv::Mat::zeros(tmp.size(),CV_16UC1);
+    this->_LUT_wrap_im = cv::Mat::zeros(tmp2.size(),CV_16UC1);
 
     cv::minMaxLoc(tmp2.row(0),&min,&max);
 
     tmp2.row(0).convertTo(this->_LUT_wrap_im.row(0), CV_16UC1
-                             ,(double)(this->_panoSize.height/(max-min)),(double)(- (min * (this->_panoSize.height/(max-min)))));
+                          ,(double)((this->_panoSize.height-1)/(max-min)),(double)(- (min * ((this->_panoSize.height-1)/(max-min)))));
 
     cv::minMaxLoc(tmp2.row(1),&min,&max);
 
     tmp2.row(1).convertTo(this->_LUT_wrap_im.row(1), CV_16UC1
-                             ,(double)(this->_panoSize.width/(max-min)),(double)(- (min * (this->_panoSize.width/(max-min)))));
+                          ,(double)((this->_panoSize.width-1)/(max-min)),(double)(- (min * ((this->_panoSize.width-1)/(max-min)))));
+
 }

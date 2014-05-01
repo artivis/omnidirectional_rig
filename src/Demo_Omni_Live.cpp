@@ -12,24 +12,7 @@ int main(int argc, char** argv){
 
     ros::init(argc,argv, "omnicamera_live");
 
-    std::vector<std::string> path_yamls_cam;
-    std::vector<std::string> topics_name;
-    std::string maskCamera_1;
-    std::string maskCamera_2;
-    std::string extrinParam;
-
-    path_yamls_cam.push_back("etc/calib/Pal_intrinsicParam_cam1.yaml");
-    path_yamls_cam.push_back("etc/calib/Pal_intrinsicParam_cam2.yaml");
-
-    maskCamera_1  = "etc/images/cam1/Img_mask1.jpg";
-    maskCamera_2  = "etc/images/cam2/Img_mask2.jpg";
-
-    topics_name.push_back("/left/image_raw");
-    topics_name.push_back("/right/image_raw");
-
-    extrinParam = "etc/calib/Pal_extrinsicParam.yaml";
-
-    OmniCamera omniSys(topics_name,path_yamls_cam,extrinParam);
+    OmniCamera omniSys("");
 
     if (!omniSys.IsInit())
     {
@@ -39,12 +22,28 @@ int main(int argc, char** argv){
 
     omniSys.DispParam();
 
-    omniSys.camera_1->LoadMask(maskCamera_1);
-    omniSys.camera_2->LoadMask(maskCamera_2);
-
     omniSys.SetPanoSize(400,1000);
 
-    omniSys.MergeLUTWrap();
+    omniSys.MergeLUTWrap(true);
+
+
+
+//    // Test with images from disk
+//    double time;
+//    std::string imCam1 = "etc/images/right_frame0000.jpg";
+//    std::string imCam2 = "etc/images/left_frame0000.jpg";
+//    omniSys.camera_1->readImage(imCam1);
+//    omniSys.camera_2->readImage(imCam2);
+
+//    time = (double)cv::getTickCount();
+//    omniSys.StitchImage();
+//    std::cout << "time to stitch : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
+
+//    cv::namedWindow("pano");
+//    cv::imshow("pano",omniSys.GetPano());
+//    cv::waitKey(0);
+//    cv::destroyWindow("pano");
+//    return 25;
 
     do
     {

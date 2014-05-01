@@ -86,7 +86,7 @@ class OmniCamera {
 
         cv::Mat _LUTsphere;
         cv::Mat _LUT_wrap_im;
-        cv::Mat _LUT_heal_wrap_im;
+//        cv::Mat _LUT_heal_wrap_im;
         cv::Mat _LUTsph_im;
 
         bool _isSampled;

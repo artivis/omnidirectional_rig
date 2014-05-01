@@ -106,47 +106,61 @@ void Sph2Heal(const cv::Mat &sph_pts, cv::Mat &healPts)
 
     float K = 3.;
 
-    float xi_c, phi_c, theta_c = std::asin(2./K);
+    float thresh = mypi / 2.;
+
+    float theta_c = std::asin(2./K);
+
+    float xi_c, phi_c, el, azi;
 
     cv::Mat healPts_tmp = cv::Mat::zeros(2,sph_pts.cols,CV_32F);
 
     for (int i=0; i<sph_pts.cols; i++)
     {
 
-        if( std::abs(sph_pts.at<float>(1,i)) < theta_c )
+        if (sph_pts.at<float>(0,i) < thresh)
         {
+            el = - (sph_pts.at<float>(0,i) - thresh);
+        }else{
+            el = thresh - sph_pts.at<float>(0,i);
+        }
 
-            healPts_tmp.at<float>(0,i) = sph_pts.at<float>(0,i);
+        if (sph_pts.at<float>(1,i) < mypi)
+        {
+            azi = sph_pts.at<float>(1,i);
+        }else{
+            azi = sph_pts.at<float>(1,i) - (2*mypi);
+        }
 
-            healPts_tmp.at<float>(1,i) = ((K*mypi)/(2.*H)) * std::sin(sph_pts.at<float>(1,i));
+        if( std::abs(el) < theta_c )
+        {
+            healPts_tmp.at<float>(1,i) = azi;
 
+            healPts_tmp.at<float>(0,i) = ((K*mypi)/(2.*H)) * std::sin(el);
 
-        }else if( sph_pts.at<float>(1,i) > theta_c && sph_pts.at<float>(1,i) > 0 ){
+        }else if( el < 0. ){
 
-            xi_c = std::sqrt( K * (1. - std::abs( std::sin(sph_pts.at<float>(1,i)) ) ) );
+            xi_c = std::sqrt( K * ( 1. - std::abs( std::sin(el) ) ) );
 
-            phi_c = -mypi + ( 2. * std::floor( ((sph_pts.at<float>(0,i)+mypi)*H)/(2*mypi) ) + 1. ) * (mypi / H);
+            phi_c = -mypi + ( 2. * std::floor( ((azi+mypi)*H)/(2.*mypi) ) + 1. ) * (mypi / H);
 
-            healPts_tmp.at<float>(0,i) = phi_c + (sph_pts.at<float>(0,i)-phi_c) * xi_c;
+            healPts_tmp.at<float>(1,i) = phi_c + (azi-phi_c) * xi_c;
 
-            healPts_tmp.at<float>(1,i) = (mypi/H) * (2.-xi_c);
-
+            healPts_tmp.at<float>(0,i) = - (mypi/H) * (2.-xi_c);
 
         }else{
 
-            xi_c = std::sqrt( K * ( 1. - std::abs( std::sin( sph_pts.at<float>(1,i) ) ) ) );
+            xi_c = std::sqrt( K * ( 1. - std::abs( std::sin(el) ) ) );
 
-            phi_c = -mypi + ( 2. * std::floor( ((sph_pts.at<float>(0,i)+mypi)*H)/(2*mypi) ) + 1. ) * (mypi / H);
+            phi_c = -mypi + ( 2. * std::floor( ((azi+mypi)*H)/(2*mypi) ) + 1. ) * (mypi / H);
 
-            healPts_tmp.at<float>(0,i) = phi_c + (sph_pts.at<float>(0,i)-phi_c) * xi_c;
+            healPts_tmp.at<float>(1,i) = phi_c + (azi-phi_c) * xi_c;
 
-            healPts_tmp.at<float>(1,i) = - (mypi/H) * (2.-xi_c);
+            healPts_tmp.at<float>(0,i) = (mypi/H) * (2.-xi_c);
 
         }
     }
 
     healPts_tmp.convertTo(healPts,sph_pts.type());
-
 }
 
 std::string AddPath(const std::string &obj, const std::string &root)

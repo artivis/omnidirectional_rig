@@ -1,5 +1,0 @@
-<launch>
-
- <node name="demo_omni_occulus" pkg="omni_localization"	type="demo_omni_oculus" args="$(find omni_localization)" output="screen"/>
-
-</launch>

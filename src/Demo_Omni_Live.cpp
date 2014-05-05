@@ -41,16 +41,16 @@ int main(int argc, char** argv){
 
     omniSys.SetPanoSize(400,1000);
 
-    omniSys.MergeLUTWrap();
+    omniSys.MergeLUTWrap(1);
 
+    double time;
 
 
 //    // Test with images from disk
-    double time;
-    std::string imCam1 = "etc/images/right_frame0000.jpg";
-    std::string imCam2 = "etc/images/left_frame0000.jpg";
-    omniSys.camera_1->readImage(imCam1);
-    omniSys.camera_2->readImage(imCam2);
+//    std::string imCam1 = "etc/images/right_frame0000.jpg";
+//    std::string imCam2 = "etc/images/left_frame0000.jpg";
+//    omniSys.camera_1->readImage(imCam1);
+//    omniSys.camera_2->readImage(imCam2);
 
 //    time = (double)cv::getTickCount();
 //    omniSys.StitchImage();
@@ -66,8 +66,8 @@ int main(int argc, char** argv){
 
     do
     {
-//        omniSys.camera_1->ReadFrame();
-//        omniSys.camera_2->ReadFrame();
+        omniSys.camera_1->ReadFrame();
+        omniSys.camera_2->ReadFrame();
 
         time = (double)cv::getTickCount();
 

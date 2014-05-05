@@ -15,8 +15,8 @@ OmniCamera::OmniCamera(const std::string &packPath)
     maskCamera_1  = ("etc/images/cam1/Img_mask1.jpg");
     maskCamera_2  = ("etc/images/cam2/Img_mask2.jpg");
 
-    topics_name.push_back(("/left/image_raw"));
     topics_name.push_back(("/right/image_raw"));
+    topics_name.push_back(("/left/image_raw"));
 
     extrinParam = ("etc/calib/Pal_extrinsicParam.yaml");
 
@@ -320,21 +320,19 @@ void OmniCamera::ApplyBaseline()
 {
     if(!this->IsInit() || this->camera_2->_LUTsphere.empty()) return;
 
-    cv::Mat tmp = this->_extrin(cv::Rect(0,0,3,3)) * this->camera_2->_LUTsphere;
+//    cv::Mat tt = GetRotationMat(0,180,0);
+//    tt.convertTo(tt,CV_32F);
+
+    cv::Mat tmp = this->_extrin(cv::Rect(0,0,3,3)) * this->camera_2->_LUTsphere; //
 
     tmp.convertTo(this->camera_2->_LUTsphere,CV_32F);
 }
 
 void OmniCamera::Rotate90roll()
 {
-    cv::Mat Rot90roll = cv::Mat::eye(3,3,CV_32FC1);
+    cv::Mat Rot90roll = GetRotationMat(-90,0,90);
 
-    float angle = -90.0;
-
-    Rot90roll.at<float>(1,1) =  cos( angle * (mypi/180.0) ); //roll
-    Rot90roll.at<float>(1,2) = -sin( angle * (mypi/180.0) );
-    Rot90roll.at<float>(2,1) =  sin( angle * (mypi/180.0) );
-    Rot90roll.at<float>(2,2) =  cos( angle * (mypi/180.0) );
+    Rot90roll.convertTo(Rot90roll,this->_LUTsphere.type());
 
     cv::Mat tmp = Rot90roll * this->_LUTsphere;
 

@@ -42,4 +42,6 @@ std::string AddPath(const std::string& obj, const std::string& root);
 
 void MatInfo(const cv::Mat&,const std::string &matname = "", bool val = false);
 
+void getListOfFilesInFolder(const std::string& path, const std::string& extension, std::vector<std::string>& baseFileNames);
+
 #endif // USEFULL_H

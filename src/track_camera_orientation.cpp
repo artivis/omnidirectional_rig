@@ -20,8 +20,8 @@ int main(int argc, char** argv){
     std::string im_cam1;
     std::string im_cam2;
 
-    im_cam2 = "/home/student/JeremieDeray/rosbag/left/frame0048.jpg";
-    im_cam1 = "/home/student/JeremieDeray/rosbag/right/frame0048.jpg";
+    im_cam2 = "/home/student/JeremieDeray/rosbag/left/frame0000.jpg";
+    im_cam1 = "/home/student/JeremieDeray/rosbag/right/frame0000.jpg";
 
     OmniCamera omniSys("");
 
@@ -44,25 +44,25 @@ int main(int argc, char** argv){
 
     cv::Mat sampSphFunc1, sampSphFunc2;
 
-    int bwIn = 16;
+    int bwIn = 64;
 
-    sampSphFunc1 = omniSys.GetPano();
+//    sampSphFunc1 = omniSys.GetPano();
 
-    omniSys.SampSphFct(sampSphFunc1,bwIn);
+    SOFTWRAPP::SampSphFct(bwIn,omniSys.GetPano(),sampSphFunc1);
 
     time = (double)cv::getTickCount();
 
-    im_cam2 = "/home/student/JeremieDeray/rosbag/left/frame0000.jpg";
-    im_cam1 = "/home/student/JeremieDeray/rosbag/right/frame0000.jpg";
+    im_cam2 = "/home/student/JeremieDeray/rosbag/left/frame0048.jpg";
+    im_cam1 = "/home/student/JeremieDeray/rosbag/right/frame0048.jpg";
 
     omniSys.camera_1->readImage(im_cam1);
     omniSys.camera_2->readImage(im_cam2);
 
     omniSys.StitchImage();
 
-    sampSphFunc2 = omniSys.GetPano();
+//    sampSphFunc2 = omniSys.GetPano();
 
-    omniSys.SampSphFct(sampSphFunc2,bwIn);
+    SOFTWRAPP::SampSphFct(bwIn,omniSys.GetPano(),sampSphFunc2);
 
 //    cv::imshow("im1",sampSphFunc1*255);
 //    cv::imshow("im2",sampSphFunc2*255);

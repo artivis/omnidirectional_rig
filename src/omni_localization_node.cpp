@@ -14,8 +14,8 @@ int main(int argc, char** argv){
 
     ros::init(argc,argv, "omni_localization");
 
-    const std::string cloudPtTopic = "/cloud_sphere";
-    ros::NodeHandle nh;
+//    const std::string cloudPtTopic = "/cloud_sphere";
+//    ros::NodeHandle nh;
 
     //ros::Publisher pub_CloudSph = nh.advertise<sensor_msgs::PointCloud>(cloudPtTopic,1);
 
@@ -48,6 +48,9 @@ int main(int argc, char** argv){
 
         featurevector_cam1 = featureExtractor.processImage(omniSys.camera_1->getImage());
         featurevector_cam2 = featureExtractor.processImage(omniSys.camera_2->getImage());
+
+
+
 
 
 

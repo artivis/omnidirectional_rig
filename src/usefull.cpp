@@ -1,5 +1,8 @@
 #include "usefull.h"
 
+#include <algorithm>
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/filesystem.hpp>
 
 
 void Cart2Sph(const cv::Mat& cart_coor, cv::Mat& sph_coor, int rad_flag )
@@ -239,4 +242,25 @@ void MatInfo(const cv::Mat &mat, const std::string &matname, bool val)
     }
 }
 
+void getListOfFilesInFolder(const std::string& path, const std::string& extension, std::vector<std::string>& baseFileNames)
+{
+
+    baseFileNames.clear();
+    const int extensionLength = extension.length();
+
+    boost::filesystem::directory_iterator end_iter;
+    for (boost::filesystem::directory_iterator dir_iter(path); dir_iter != end_iter; ++dir_iter)
+    {
+        if (boost::filesystem::is_regular_file(dir_iter->status()))
+        {
+            std::string filename = dir_iter->path().filename().string();
+            if (boost::algorithm::ends_with(filename, extension))
+            {
+                std::string basename = filename.substr(0, filename.length() - extensionLength);
+                baseFileNames.push_back(basename);
+            }
+        }
+    }
+    std::sort(baseFileNames.begin(), baseFileNames.end());
+}
 

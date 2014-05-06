@@ -489,31 +489,31 @@ void OmniCamera::DownSample(int sampling_ratio)
 }
 
 
-void OmniCamera::SampSphFct(cv::Mat &sampFct, int bandwidth)
-{
-    if (!this->IsInit()) return;
-    if (this->_pano.empty()) return;
+//void OmniCamera::SampSphFct(cv::Mat &sampFct, int bandwidth)
+//{
+//    if (!this->IsInit()) return;
+//    if (this->_pano.empty()) return;
 
-    cv::Mat tmp;
-    double min, max;
-    cv::Size gridSize;
+//    cv::Mat tmp;
+//    double min, max;
+//    cv::Size gridSize;
 
-    gridSize.height = bandwidth*2;
-    gridSize.width = bandwidth*2;
+//    gridSize.height = bandwidth*2;
+//    gridSize.width = bandwidth*2;
 
-    cv::cvtColor(this->_pano,tmp,CV_BGR2GRAY);
+//    cv::cvtColor(this->_pano,tmp,CV_BGR2GRAY);
 
-    tmp.convertTo(tmp ,CV_64F);
+//    tmp.convertTo(tmp ,CV_64F);
 
-    cv::minMaxLoc(tmp,&min,&max);
+//    cv::minMaxLoc(tmp,&min,&max);
 
-    tmp -= min;
-    tmp /= max;
+//    tmp -= min;
+//    tmp /= max;
 
-    tmp /= cv::norm(tmp);
+//    tmp /= cv::norm(tmp);
 
-    cv::resize(tmp,sampFct,gridSize);
-}
+//    cv::resize(tmp,sampFct,gridSize);
+//}
 
 
 void OmniCamera::Sph2Pano()

@@ -5,6 +5,9 @@
 
 #include <fftw3.h>
 
+#include "opencv2/core/core.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+
 #include <soft20/makeweights.h>
 #include <soft20/s2_primitive.h>
 #include <soft20/s2_cospmls.h>
@@ -91,7 +94,7 @@ void SOFTWRAPP::WrapSphCorr2(int bw, const cv::Mat &sphPattern, const cv::Mat &s
 }
 
 
-void SOFTWRAPP::DispSphHarm(const std::vector< std::vector< std::complex<double> > > &sphHarm)
+void SOFTWRAPP::DispSphHarm(const harmCoeff &sphHarm)
 {
     std::vector< std::complex<double> >::const_iterator _it_begin, _it_end;
 
@@ -327,5 +330,72 @@ void SOFTWRAPP::WrapSphHarm(int bw, const cv::Mat &signal, harmCoeff &coeff)
 }
 
 
+void SOFTWRAPP::SampSphFct(int bandwidth,const cv::Mat &pano, cv::Mat &sampFct)
+{
+    cv::Mat tmp;
+    double min, max;
+    cv::Size gridSize;
 
+    gridSize.height = bandwidth*2;
+    gridSize.width = bandwidth*2;
+
+    cv::cvtColor(pano,tmp,CV_BGR2GRAY);
+
+    tmp.convertTo(tmp ,CV_64F);
+
+    cv::minMaxLoc(tmp,&min,&max);
+
+    tmp -= min;
+    tmp /= max;
+
+    tmp /= cv::norm(tmp);
+
+    cv::resize(tmp,sampFct,gridSize);
+}
+
+
+void SaveSphHarm(const std::string &filename, const harmCoeff &harmcoeff)
+{
+//    std::vector< std::complex<double> >::const_iterator _it_begin, _it_end;
+
+//    int m = 0;
+
+    ofstream os;
+    os.open((char*)filename.c_str());
+
+    if ( !os.is_open() )
+    {
+        std::cout<<"Failed to open "<<filename<< std::endl;
+        return false;
+    }
+
+    BOOST_FOREACH(std::vector< std::complex<double> > &l, harmcoeff)
+    {
+        BOOST_FOREACH(std::complex<double> &m, l)
+        {
+
+              os << l;
+
+        }
+    }
+
+    os.close();
+
+//    for (int i=0; i < sphHarm.size();i++)
+//    {
+//        _it_begin = sphHarm.at(i).begin();
+
+//        _it_end = sphHarm.at(i).end();
+
+//        m = - i;
+
+//        while(_it_begin != _it_end)
+//        {
+//            std::cout<<"l : "<<i<<" m : "<<m<<" val : "<<*_it_begin<<std::endl;
+
+//            _it_begin++;
+//            m++;
+//        }
+//    }
+}
 

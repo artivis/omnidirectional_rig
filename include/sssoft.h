@@ -5,11 +5,13 @@
 
 //#warning "HOOOOOOOOOOOOOOOOOOOOO"
 
-typedef std::vector< std::vector< std::complex<double> > > harmCoeff;
+//typedef std::vector< std::vector< std::complex<double> > > harmCoeff;
 
 
 namespace SOFTWRAPP
 {
+
+    typedef std::vector< std::vector< std::complex<double> > > harmCoeff;
 
     void WrapSphCorr2(int bw, const cv::Mat &sphPattern, const cv::Mat &sphSignal, cv::Vec3f &EulerAngle);
 
@@ -19,11 +21,13 @@ namespace SOFTWRAPP
 
     void HarmDesc(const harmCoeff &coeff, std::vector< double > &descriptor);
 
+    void SampSphFct(int bandwidth,const cv::Mat &pano, cv::Mat &sampFct);
 
-
-    void DispSphHarm(const std::vector< std::vector< std::complex<double> > > &);
+    void DispSphHarm(const harmCoeff &);
 
     void DispRotEst(const cv::Vec3f&);
+
+    void SaveSphHarm(const std::string&, const harmCoeff&);
 
 }
 

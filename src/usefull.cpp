@@ -221,6 +221,38 @@ cv::Mat GetRotationMat(double roll, double pitch, double yaw, bool rad)
     return rotYaw * rotPitch * rotRoll;
 }
 
+cv::Mat GetZYZRotationMat(double yaw1, double pitch, double yaw2, bool rad)
+{
+    cv::Mat rotYaw1 = cv::Mat::eye(3,3,CV_64F);
+    cv::Mat rotPitch = cv::Mat::eye(3,3,CV_64F);
+    cv::Mat rotYaw2 = cv::Mat::eye(3,3,CV_64F);
+
+    if (!rad)
+    {
+        yaw1 = Deg2Rad(yaw1);
+        pitch = Deg2Rad(pitch);
+        yaw2 = Deg2Rad(yaw2);
+    }
+
+    rotPitch.at<double>(0,0) =  cos( pitch ); //pitch y
+    rotPitch.at<double>(0,2) =  sin( pitch );
+    rotPitch.at<double>(2,0) = -sin( pitch );
+    rotPitch.at<double>(2,2) =  cos( pitch );
+
+    rotYaw1.at<double>(0,0) =  cos( yaw1 ); //yaw1 z
+    rotYaw1.at<double>(0,1) = -sin( yaw1 );
+    rotYaw1.at<double>(1,0) =  sin( yaw1 );
+    rotYaw1.at<double>(1,1) =  cos( yaw1 );
+
+    rotYaw2.at<double>(0,0) =  cos( yaw2 ); //yaw2 z
+    rotYaw2.at<double>(0,1) = -sin( yaw2 );
+    rotYaw2.at<double>(1,0) =  sin( yaw2 );
+    rotYaw2.at<double>(1,1) =  cos( yaw2 );
+
+
+    return rotYaw1 * rotPitch * rotYaw2;
+}
+
 double Deg2Rad(double angle)
 {
     return angle * (mypi/180.0);

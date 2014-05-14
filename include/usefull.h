@@ -36,6 +36,8 @@ void RotateCloudPoint(cv::Mat&,double,double,double, bool rad = false);
 
 cv::Mat GetRotationMat(double,double,double, bool rad = false);
 
+cv::Mat GetZYZRotationMat(double yaw1, double pitch, double yaw2, bool rad = false);
+
 double Deg2Rad(double);
 
 std::string AddPath(const std::string& obj, const std::string& root);

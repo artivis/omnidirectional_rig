@@ -17,11 +17,11 @@ int main(int argc, char** argv){
 
     cv::Vec3f rotation;
 
-    std::string im_cam1;
-    std::string im_cam2;
+//    std::string im_cam1;
+//    std::string im_cam2;
 
-    im_cam2 = "/home/student/JeremieDeray/rosbag/left/frame0000.jpg";
-    im_cam1 = "/home/student/JeremieDeray/rosbag/right/frame0000.jpg";
+//    im_cam2 = "/home/student/JeremieDeray/rosbag/rotary_table/left/frame0000.jpg";
+//    im_cam1 = "/home/student/JeremieDeray/rosbag/rotary_table/right/frame0000.jpg";
 
     OmniCamera omniSys("");
 
@@ -33,14 +33,14 @@ int main(int argc, char** argv){
 
     omniSys.DispParam();
 
-    omniSys.camera_1->readImage(im_cam1);
-    omniSys.camera_2->readImage(im_cam2);
+//    omniSys.camera_1->readImage(im_cam1);
+//    omniSys.camera_2->readImage(im_cam2);
 
     omniSys.SetPanoSize(400,400);
 
     omniSys.MergeLUTWrap();
 
-    omniSys.StitchImage();
+//    omniSys.StitchImage();
 
     cv::Mat sampSphFunc1, sampSphFunc2;
 
@@ -48,21 +48,21 @@ int main(int argc, char** argv){
 
 //    sampSphFunc1 = omniSys.GetPano();
 
-    SOFTWRAPP::SampSphFct(bwIn,omniSys.GetPano(),sampSphFunc1);
+//    SOFTWRAPP::SampSphFct(bwIn,omniSys.GetPano(),sampSphFunc1);
 
-    time = (double)cv::getTickCount();
+//    time = (double)cv::getTickCount();
 
-    im_cam2 = "/home/student/JeremieDeray/rosbag/left/frame0048.jpg";
-    im_cam1 = "/home/student/JeremieDeray/rosbag/right/frame0048.jpg";
+//    im_cam2 = "/home/student/JeremieDeray/rosbag/left/frame0048.jpg";
+//    im_cam1 = "/home/student/JeremieDeray/rosbag/right/frame0048.jpg";
 
-    omniSys.camera_1->readImage(im_cam1);
-    omniSys.camera_2->readImage(im_cam2);
+//    omniSys.camera_1->readImage(im_cam1);
+//    omniSys.camera_2->readImage(im_cam2);
 
-    omniSys.StitchImage();
+//    omniSys.StitchImage();
 
 //    sampSphFunc2 = omniSys.GetPano();
 
-    SOFTWRAPP::SampSphFct(bwIn,omniSys.GetPano(),sampSphFunc2);
+//    SOFTWRAPP::SampSphFct(bwIn,omniSys.GetPano(),sampSphFunc2);
 
 //    cv::imshow("im1",sampSphFunc1*255);
 //    cv::imshow("im2",sampSphFunc2*255);
@@ -73,16 +73,22 @@ int main(int argc, char** argv){
 
 
 
-    SOFTWRAPP::WrapSphCorr2(bwIn,sampSphFunc1,sampSphFunc2,rotation);
+//    SOFTWRAPP::WrapSphCorr2(bwIn,sampSphFunc1,sampSphFunc2,rotation);
 
-    SOFTWRAPP::DispRotEst(rotation);
+//    SOFTWRAPP::DispRotEst(rotation);
 
-    std::cout << "time to correlate : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
+//    std::cout << "time to correlate : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
 
-    return -2;
+//    return -2;
 
 
+     cv::Mat rotZYZ;
 
+     omniSys.ReadFrame();
+
+     omniSys.StitchImage();
+
+    SOFTWRAPP::SampSphFct(bwIn,omniSys.GetPano(),sampSphFunc1);
 
 
 
@@ -92,9 +98,24 @@ int main(int argc, char** argv){
 
         omniSys.ReadFrame();
 
-        std::cout << "time to publish sphere : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
+        omniSys.StitchImage();
+
+        SOFTWRAPP::SampSphFct(bwIn,omniSys.GetPano(),sampSphFunc2);
+
+        SOFTWRAPP::WrapSphCorr2(bwIn,sampSphFunc1,sampSphFunc2,rotation);
+
+        SOFTWRAPP::DispRotEst(rotation);
+
+        std::cout << "time to estimate : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
+
+        rotZYZ = GetZYZRotationMat(rotation[0],rotation[1],rotation[2]);
+
+        std::cout << "ZYZ Rotation : "<< rotZYZ <<std::endl<<std::endl;
+
+        sampSphFunc2.copyTo(sampSphFunc1);
 
         ros::spinOnce();
+
 
     }while(cv::waitKey(10) != 'q');
 

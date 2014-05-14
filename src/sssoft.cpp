@@ -8,15 +8,21 @@
 #include "opencv2/core/core.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 
+#include <boost/foreach.hpp>
+
+//#include <soft20/soft_fftw.h>
+//#include <soft20/s2_legendreTransforms.h>
+
 #include <soft20/makeweights.h>
 #include <soft20/s2_primitive.h>
 #include <soft20/s2_cospmls.h>
-
+#include <soft20/rotate_so3_fftw.h>
 #include <soft20/s2_semi_memo.h>
 
 #include <soft20/wrap_fftw.h>
 
 #include <iostream>
+#include <fstream>
 
 
 #define NORM( x ) ( (x[0])*(x[0]) + (x[1])*(x[1]) )
@@ -36,8 +42,8 @@ void SOFTWRAPP::WrapSphCorr2(int bw, const cv::Mat &sphPattern, const cv::Mat &s
     n = 2 * bw ;
 
     /* allocate space to hold signal, pattern */
-    signal = (double *) malloc( sizeof(double) * (n * n) );
-    pattern = (double *) malloc( sizeof(double) * (n * n) );
+    signal = new double[n * n];
+    pattern = new double[n * n];
 
 
     /****
@@ -47,8 +53,8 @@ void SOFTWRAPP::WrapSphCorr2(int bw, const cv::Mat &sphPattern, const cv::Mat &s
     if ( (signal == NULL) || (pattern == NULL) )
     {
         perror("Error in allocating memory");
-        free( pattern );
-        free( signal ) ;
+        delete[] pattern;
+        delete[] signal;
         return;
     }
 
@@ -89,8 +95,111 @@ void SOFTWRAPP::WrapSphCorr2(int bw, const cv::Mat &sphPattern, const cv::Mat &s
     EulerAngle[2] = gamma;
 
     /* clean up */
-    free( pattern );
-    free( signal ) ;
+    delete[] pattern;
+    delete[] signal;
+}
+
+
+void SOFTWRAPP::WarpS2Rotate(int bw, cv::Vec3f eulerang, const harmCoeff& harmcoeff, harmCoeff& rotharmcoeff)
+{
+    double alpha = eulerang[0];
+    double beta = eulerang[1];
+    double gamma = eulerang[2];
+
+    double degOut = bw - 1;
+
+    int m, l, i = 0;
+
+    double *sigR, *sigI ;
+    double *scratch ;
+    double *seminaive_naive_tablespace ;
+    double *trans_seminaive_naive_tablespace;
+    double **seminaive_naive_table ;
+    double **trans_seminaive_naive_table;
+
+    std::complex<double> tmp_deg;
+    std::vector< std::complex<double> > tmp_ord;
+
+    sigR = new double[4*bw*bw];
+    sigI = new double[4*bw*bw];
+    scratch = new double[(10*bw*bw) + (48 * bw)];
+
+    seminaive_naive_tablespace = new double[Reduced_Naive_TableSize(bw,bw) + Reduced_SpharmonicTableSize(bw,bw)];
+
+    trans_seminaive_naive_tablespace = new double[Reduced_Naive_TableSize(bw,bw) + Reduced_SpharmonicTableSize(bw,bw)];
+
+
+    if ((scratch == NULL) ||
+        (sigR == NULL ) || (sigI == NULL ) ||
+        (seminaive_naive_tablespace == NULL) ||
+        (trans_seminaive_naive_tablespace == NULL) )
+    {
+        perror("Error in allocating memory");
+        exit( 1 ) ;
+    }
+
+    seminaive_naive_table = SemiNaive_Naive_Pml_Table(bw, bw,
+                                seminaive_naive_tablespace,
+                                scratch);
+
+
+    trans_seminaive_naive_table = Transpose_SemiNaive_Naive_Pml_Table(seminaive_naive_table,
+                                                bw, bw,
+                                                trans_seminaive_naive_tablespace,
+                                                scratch);
+
+    std::vector< std::complex<double> >::const_iterator _it_begin, _it_end;
+    std::complex<double> tmpc;
+
+    for (int i=0; i < harmcoeff.size();i++)
+    {
+        _it_begin = harmcoeff.at(i).begin();
+
+        _it_end = harmcoeff.at(i).end();
+
+        while(_it_begin != _it_end)
+        {
+
+            tmpc = *_it_begin;
+
+            sigR[i] = tmpc.real();
+            sigI[i] = tmpc.imag();
+
+            _it_begin++;
+        }
+    }
+
+
+    rotateFctFFTWS_mem( bw, degOut,
+                        sigR, sigI,
+                        alpha, beta, gamma ) ;
+
+
+    for(l = 0 ; l < bw ; l++ )
+    {
+        for(m = -l; m < l+1 ; m++ )
+        {
+            tmp_deg.real(sigR[i]);
+            tmp_deg.imag(sigI[i]);
+            tmp_ord.push_back(tmp_deg);
+
+            i++;
+        }
+
+        rotharmcoeff.push_back(tmp_ord);
+        tmp_ord.clear();
+    }
+
+
+    free(trans_seminaive_naive_table);
+    free(seminaive_naive_table);
+
+    delete[] trans_seminaive_naive_tablespace;
+    delete[] seminaive_naive_tablespace;
+
+    delete[] scratch;
+    delete[] sigI;
+    delete[] sigR;
 }
 
 
@@ -127,6 +236,7 @@ void SOFTWRAPP::DispRotEst(const cv::Vec3f &rotation)
              "\n beta  = "<<rotation[1]<<
              "\n gamma = "<<rotation[2]<<std::endl<<std::endl;
 }
+
 
 void SOFTWRAPP::HarmDesc(const harmCoeff &coeff, std::vector< std::complex<double> > &descriptor)
 {
@@ -214,7 +324,9 @@ void SOFTWRAPP::WrapSphHarm(int bw, const cv::Mat &signal, harmCoeff &coeff)
     double *weights ;
     double *seminaive_naive_tablespace ;
     double **seminaive_naive_table ;
-    fftw_complex *workspace2  ;
+//    double *workspace2  ;
+
+    fftw_complex *workspace2;
     fftw_plan dctPlan, fftPlan ;
 
     int rank, howmany_rank;
@@ -223,11 +335,13 @@ void SOFTWRAPP::WrapSphHarm(int bw, const cv::Mat &signal, harmCoeff &coeff)
     std::complex<double> tmp_deg;
     std::vector< std::complex<double> > tmp_ord;
 
-    coeff.clear();
-
     n = 2 * bw ;
 
-    workspace2 = (fftw_complex *) malloc( sizeof(fftw_complex) * ((14*bw*bw) + (48 * bw)));
+    workspace2 =  (fftw_complex *)fftw_malloc( sizeof(fftw_complex) * ((14*bw*bw) + (48 * bw)));
+
+//    workspace2 = new double[(14*bw*bw) + (48 * bw)];
+
+    workspace3 = new double[(12*n) + (n*bw)];
 
     tmpR = new double[n*n];
     tmpI = new double[n*n];
@@ -246,20 +360,38 @@ void SOFTWRAPP::WrapSphHarm(int bw, const cv::Mat &signal, harmCoeff &coeff)
 
     if ( (seminaive_naive_tablespace == NULL) ||
          (tmpR == NULL) || ( tmpI == NULL) ||
-         (weights == NULL) || (workspace2 == NULL) ||
+         (weights == NULL) ||
+         (workspace3 == NULL) || (workspace2 == NULL) ||
          (sigCoefR == NULL) || (sigCoefI == NULL) )
     {
         perror("Error in allocating memory");
-        exit( 1 ) ;
+
+        fftw_free( workspace2 );
+
+//        delete[] workspace2;
+
+        delete[] seminaive_naive_tablespace;
+
+        delete[] workspace3;
+        delete[] weights;
+        delete[] sigCoefI;
+        delete[] sigCoefR;
+
+        delete[] tmpI;
+        delete[] tmpR;
+
+        return;
     }
 
+
+    /* Make the weights */
+    makeweights( bw, weights ) ;
 
     /* create fftw plans for the S^2 transforms */
     /* first for the dct */
     dctPlan = fftw_plan_r2r_1d( 2*bw, weights, workspace3,
                       FFTW_REDFT10, FFTW_ESTIMATE ) ;
 
-    makeweights( bw, weights ) ;
 
     rank = 1 ;
     dims[0].n = 2*bw ;
@@ -273,22 +405,29 @@ void SOFTWRAPP::WrapSphHarm(int bw, const cv::Mat &signal, harmCoeff &coeff)
     fftPlan = fftw_plan_guru_split_dft( rank, dims,
                           howmany_rank, howmany_dims,
                           tmpR, tmpI,
-                          (double *) workspace2,
-                          (double *) workspace2 + (n*n),
+                          (double *)workspace2,
+                          (double *)workspace2 + (n*n),
                           FFTW_ESTIMATE );
 
+
+
+    /* Precompute Legendres */
     seminaive_naive_table = SemiNaive_Naive_Pml_Table(bw, bw,
                                 seminaive_naive_tablespace,
-                                (double *) workspace2);
+                                (double *)workspace2);
+
+
+    assert((signal.rows*signal.cols) == (n*n));
+    int tt = 0;
 
     /* load SIGNAL samples into temp array */
-
     for (i = 0 ; i < signal.rows ; i++ )
     {
         for (j = 0 ; j < signal.cols ; j++ )
         {
-            tmpR[i] = signal.at<float>(i,j) ;
-            tmpI[i] = 0. ;
+            tmpR[tt] = signal.at<double>(i,j) ;
+            tmpI[tt] = 0. ;
+            tt++;
         }
     }
 
@@ -297,9 +436,9 @@ void SOFTWRAPP::WrapSphHarm(int bw, const cv::Mat &signal, harmCoeff &coeff)
     FST_semi_memo( tmpR, tmpI,
                    sigCoefR, sigCoefI,
                    bw, seminaive_naive_table,
-                   (double *) workspace2, isReal, bw,
+                   (double *)workspace2, isReal, bw,
                    &dctPlan, &fftPlan,
-                   weights );  // blarg
+                   weights );
 
 
     for(l = 0 ; l < bw ; l++ )
@@ -308,7 +447,7 @@ void SOFTWRAPP::WrapSphHarm(int bw, const cv::Mat &signal, harmCoeff &coeff)
         {
             dummy = seanindex(m,l,bw);
             tmp_deg.real(sigCoefR[dummy]);
-            tmp_deg.imag(   sigCoefI[dummy]);
+            tmp_deg.imag(sigCoefI[dummy]);
             tmp_ord.push_back(tmp_deg);
         }
         coeff.push_back(tmp_ord);
@@ -317,7 +456,14 @@ void SOFTWRAPP::WrapSphHarm(int bw, const cv::Mat &signal, harmCoeff &coeff)
 
 
     free( seminaive_naive_table ) ;
-    free( workspace2 );
+
+    fftw_free( workspace2 );
+
+    fftw_destroy_plan( fftPlan );
+    fftw_destroy_plan( dctPlan );
+
+//    delete[] workspace2;
+    delete[] workspace3;
 
     delete[] seminaive_naive_tablespace;
 
@@ -330,14 +476,14 @@ void SOFTWRAPP::WrapSphHarm(int bw, const cv::Mat &signal, harmCoeff &coeff)
 }
 
 
-void SOFTWRAPP::SampSphFct(int bandwidth,const cv::Mat &pano, cv::Mat &sampFct)
+void SOFTWRAPP::SampSphFct(int bw,const cv::Mat &pano, cv::Mat &sampFct)
 {
     cv::Mat tmp;
     double min, max;
     cv::Size gridSize;
 
-    gridSize.height = bandwidth*2;
-    gridSize.width = bandwidth*2;
+    gridSize.height = bw*2;
+    gridSize.width = bw*2;
 
     cv::cvtColor(pano,tmp,CV_BGR2GRAY);
 
@@ -350,52 +496,37 @@ void SOFTWRAPP::SampSphFct(int bandwidth,const cv::Mat &pano, cv::Mat &sampFct)
 
     tmp /= cv::norm(tmp);
 
-    cv::resize(tmp,sampFct,gridSize);
+    cv::resize(tmp,tmp,gridSize);
+
+    tmp.convertTo(sampFct,CV_64F);
 }
 
 
-void SaveSphHarm(const std::string &filename, const harmCoeff &harmcoeff)
+void SOFTWRAPP::SaveSphHarm(const std::string &filename, const harmCoeff &harmcoeff)
 {
-//    std::vector< std::complex<double> >::const_iterator _it_begin, _it_end;
+//    std::ofstream os;
+//    os.open((char*)filename.c_str());
 
-//    int m = 0;
-
-    ofstream os;
-    os.open((char*)filename.c_str());
-
-    if ( !os.is_open() )
-    {
-        std::cout<<"Failed to open "<<filename<< std::endl;
-        return false;
-    }
-
-    BOOST_FOREACH(std::vector< std::complex<double> > &l, harmcoeff)
-    {
-        BOOST_FOREACH(std::complex<double> &m, l)
-        {
-
-              os << l;
-
-        }
-    }
-
-    os.close();
-
-//    for (int i=0; i < sphHarm.size();i++)
+//    if ( !os.is_open() )
 //    {
-//        _it_begin = sphHarm.at(i).begin();
+//        std::cout<<"Failed to open "<<filename<< std::endl;
+//        return;
+//    }
 
-//        _it_end = sphHarm.at(i).end();
+//    typedef std::vector< std::complex<double> > my_vec;
+//    typedef std::complex<double> my_comp;
 
-//        m = - i;
-
-//        while(_it_begin != _it_end)
+//    BOOST_FOREACH(const my_vec &l, harmcoeff)
+//    {
+//        BOOST_FOREACH(my_comp &m, l)
 //        {
-//            std::cout<<"l : "<<i<<" m : "<<m<<" val : "<<*_it_begin<<std::endl;
-
-//            _it_begin++;
-//            m++;
+//            os << m.real();
+//            os << "\n";
+//            os << m.imag();
+//            os << "\n";
 //        }
 //    }
+
+//    os.close();
 }
 

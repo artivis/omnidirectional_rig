@@ -21,7 +21,9 @@ namespace SOFTWRAPP
 
     void HarmDesc(const harmCoeff &coeff, std::vector< double > &descriptor);
 
-    void SampSphFct(int bandwidth,const cv::Mat &pano, cv::Mat &sampFct);
+    void SampSphFct(int bw,const cv::Mat &pano, cv::Mat &sampFct);
+
+    void WarpS2Rotate(int bw, cv::Vec3f, const harmCoeff&, harmCoeff&);
 
     void DispSphHarm(const harmCoeff &);
 

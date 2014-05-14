@@ -41,7 +41,7 @@ int main(int argc, char** argv){
 
     omniSys.SetPanoSize(400,1000);
 
-    omniSys.MergeLUTWrap(1);
+    omniSys.MergeLUTWrap();
 
     double time;
 

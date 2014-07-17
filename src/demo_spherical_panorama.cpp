@@ -1,6 +1,5 @@
 #include "image_handler.h"
-#include "omni_camera.h"
-#include "fisheye.h"
+#include "poly_omni.h"
 
 #include <opencv2/core/core.hpp>
 
@@ -19,7 +18,7 @@ int main(int argc, char** argv){
     ros::init(argc,argv, "omnicamera_live");
     ros::NodeHandle nh;
 
-    OmniCamera omniSys("");
+    PolyOmniCamera omniSys("");
 
     if (!omniSys.IsInit())
     {
@@ -81,7 +80,7 @@ int main(int argc, char** argv){
 
         pub.publish(img_msg);
 
-	img_msg.header.stamp = ros::Time::now();
+        img_msg.header.stamp = ros::Time::now();
 
         std::cout << "time to stitch : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
 

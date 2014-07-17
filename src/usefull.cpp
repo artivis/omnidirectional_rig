@@ -296,3 +296,29 @@ void getListOfFilesInFolder(const std::string& path, const std::string& extensio
     std::sort(baseFileNames.begin(), baseFileNames.end());
 }
 
+std::set<std::string> loadFilesName(const std::string &dir)
+{
+    std::set<std::string> result;
+
+    boost::filesystem::path directory(dir);
+    if (!boost::filesystem::is_directory(dir))
+    {
+        std::cout << "DERE" << std::endl;
+        return std::set<std::string>();
+
+    }
+
+    boost::filesystem::directory_iterator end_iter;
+    for (boost::filesystem::directory_iterator it(dir); it != end_iter; ++it)
+    {
+        boost::filesystem::path file = it->path();
+
+        if (boost::filesystem::is_regular_file(it->status()) && file.filename().string()[0] != '.')
+        {
+            result.insert(file.string());
+        }
+    }
+
+    return result;
+}
+

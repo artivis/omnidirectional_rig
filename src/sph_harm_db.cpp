@@ -80,5 +80,5 @@ int main(int argc, char** argv)
 //      ROS_ERROR("Usage:\n - sph_harm_db [ROS args...] <cam1 images directory> <cam2 images directory> <image extension> <output path>\n");
 //    }
 
-    return 15;
+    return 20;
 }

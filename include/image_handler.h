@@ -8,6 +8,8 @@
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/image_encodings.h>
 
+#include <image_transport/image_transport.h>
+
 namespace pal {
     namespace slam {
 
@@ -31,6 +33,7 @@ namespace pal {
 
             ros::NodeHandle _nh;
             ros::CallbackQueue _cbqueue;
+	    //image_transport::ImageTransport it(nh);
             ros::Subscriber _subscriber;
             bool _imageReceived;
             sensor_msgs::ImageConstPtr _image;

@@ -8,10 +8,42 @@
 #include <string>
 
 
+
+#include <boost/range/combine.hpp>
+#include <boost/tuple/tuple.hpp>
+//#include <boost/foreach.hpp>
+//#include <boost/filesystem.hpp>
+
+//std::set<std::string> loadFilesName(const std::string &dir)
+//{
+//    std::set<std::string> result;
+
+//    boost::filesystem::path directory(dir);
+//    if (!boost::filesystem::is_directory(dir))
+//    {
+//        ROS_ERROR_STREAM("ERROR! Directory not found: " << dir);
+//    }
+
+//    boost::filesystem::directory_iterator end_iter;
+//    for (boost::filesystem::directory_iterator it(dir); it != end_iter; ++it)
+//    {
+//        boost::filesystem::path file = it->path().filename();;
+
+//        if (boost::filesystem::is_regular_file(it->status()) && file.filename().string()[0] != '.')
+//        {
+//            result.insert(file.string());
+//        }
+//    }
+//    return result;
+//}
+
+
+
+
 int main(int argc, char** argv){
 
-    if (argc != 2) return -1;
-    if (argv == NULL) return -1;
+    //if (argc != 3) return -1;
+    //if (argv == NULL) return -1;
 
     int sampling_ratio = atof(argv[1]);
     std::string conf_path = argv[2]; //TODO check nb arg & val
@@ -30,10 +62,10 @@ int main(int argc, char** argv){
 
     ros::Publisher pub_CloudSph = nh.advertise<sensor_msgs::PointCloud>(cloudPtTopic,0);
 
-    path_yamls_cam.push_back(AddPath("etc/calib/Pal_intrinsicParam_cam1.yaml",conf_path));
-    path_yamls_cam.push_back(AddPath("etc/calib/Pal_intrinsicParam_cam2.yaml",conf_path));
+    path_yamls_cam.push_back(AddPath("etc/calib/proto2/Pal_intrinsicParam_cam1.yaml",conf_path));
+    path_yamls_cam.push_back(AddPath("etc/calib/proto2/Pal_intrinsicParam_cam2.yaml",conf_path));
 
-    extrinParam = AddPath("etc/calib/Pal_extrinsicParam.yaml",conf_path);
+    extrinParam = AddPath("etc/calib/proto2/Pal_extrinsicParam.yaml",conf_path);
 
     maskCamera_1  = AddPath("etc/images/cam1/Img_mask1.jpg",conf_path);
     maskCamera_2  = AddPath("etc/images/cam2/Img_mask2.jpg",conf_path);
@@ -59,30 +91,59 @@ int main(int argc, char** argv){
 
     omniSys.PartiallyFillMess(ptsCld);
 
-    do
-    {
-        omniSys.camera_1->ReadFrame();
-        omniSys.camera_2->ReadFrame();
+    std::set<std::string> imagesR = loadFilesName("/home/student/JeremieDeray/rosbag/runvideo/images/1/right/");
+    std::set<std::string> imagesL = loadFilesName("/home/student/JeremieDeray/rosbag/runvideo/images/1/left/");
 
-        time = (double)cv::getTickCount();
+//    do
+//    {
+//        omniSys.camera_1->ReadFrame();
+//        omniSys.camera_2->ReadFrame();
+
+//        time = (double)cv::getTickCount();
+
+//        omniSys.MessRGBSph(ptsCld);
+
+//        //std::cout << "time to comp sphere : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
+
+//        time = (double)cv::getTickCount();
+
+//        pub_CloudSph.publish(ptsCld);
+
+//        //std::cout << "time to publish sphere : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
+
+//        ros::spinOnce();
+
+//        exit = cv::waitKey(10);
+
+//        if(exit == 27) break;
+
+//    }while(1);
+
+
+    std::cout << "ABOUT TO BOOST " << std::endl;
+    std::cout << "FILESR "<< imagesR.size() << std::endl;
+    std::cout << "FILESL "<< imagesL.size() << std::endl;
+    std::string file1,file2;
+
+    BOOST_FOREACH(boost::tie(file1,file2), boost::combine(imagesR,imagesL))
+    {
+        std::cout << "BOOSTING " << std::endl;
+
+        omniSys.camera_1->readImage(file1);
+        omniSys.camera_2->readImage(file2);
 
         omniSys.MessRGBSph(ptsCld);
 
-        //std::cout << "time to comp sphere : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
-
-        time = (double)cv::getTickCount();
-
         pub_CloudSph.publish(ptsCld);
 
-        //std::cout << "time to publish sphere : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
+        std::cout << "PUBLISHED " << std::endl;
 
         ros::spinOnce();
 
-        exit = cv::waitKey(10);
+        exit = cv::waitKey(4000);
+    }
 
-        if(exit == 27) break;
 
-    }while(1);
 
     return 0;
 }

@@ -12,8 +12,8 @@ OmniCamera::OmniCamera(const std::string &packPath)
     path_yamls_cam.push_back(("etc/calib/Pal_intrinsicParam_cam1.yaml"));
     path_yamls_cam.push_back(("etc/calib/Pal_intrinsicParam_cam2.yaml"));
 
-    maskCamera_1  = ("etc/images/cam1/Img_mask1.jpg");
-    maskCamera_2  = ("etc/images/cam2/Img_mask2.jpg");
+    maskCamera_2  = ("etc/images/cam1/Img_mask1.jpg");
+    maskCamera_1  = ("etc/images/cam2/Img_mask2.jpg");
 
     topics_name.push_back(("/right/image_raw"));
     topics_name.push_back(("/left/image_raw"));

@@ -2,6 +2,7 @@
 #define USEFULL_H
 
 #include <vector>
+#include <set>
 #include <iostream>
 #include <math.h>
 #include <opencv2/core/core.hpp>
@@ -45,5 +46,7 @@ std::string AddPath(const std::string& obj, const std::string& root);
 void MatInfo(const cv::Mat&,const std::string &matname = "", bool val = false);
 
 void getListOfFilesInFolder(const std::string& path, const std::string& extension, std::vector<std::string>& baseFileNames);
+
+std::set<std::string> loadFilesName(const std::string &dir);
 
 #endif // USEFULL_H

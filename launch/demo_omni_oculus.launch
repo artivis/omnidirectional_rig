@@ -1,0 +1,9 @@
+<launch>
+
+ 
+
+ <node name="demo_omni_occulus" pkg="omni_localization" type="demo_omni_oculus" args="1 $(find omni_localization)" output="screen"/>
+
+ <node name="rviz" pkg="rviz" type="rviz" output="screen"/>
+
+</launch>

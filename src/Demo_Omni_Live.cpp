@@ -46,9 +46,9 @@ int main(int argc, char** argv){
     double time;
 
 
-//    // Test with images from disk
-//    std::string imCam1 = "etc/images/right_frame0000.jpg";
-//    std::string imCam2 = "etc/images/left_frame0000.jpg";
+//     //Test with images from disk
+//    std::string imCam1 = "/home/student/JeremieDeray/rosbag/run3/images/omni/left/025Img_10.8304_-2.4232_0_0_-0.112161_0.99369.jpg";
+//    std::string imCam2 = "/home/student/JeremieDeray/rosbag/run3/images/omni/right/025Img_10.8304_-2.4232_0_0_-0.112161_0.99369.jpg";
 //    omniSys.camera_1->readImage(imCam1);
 //    omniSys.camera_2->readImage(imCam2);
 
@@ -73,13 +73,15 @@ int main(int argc, char** argv){
 
         omniSys.StitchImage();
 
-        cv_img.header.stamp = ros::Time::now();
+        //cv_img.header.stamp = ros::Time::now();
 
         cv_img.image = omniSys.GetPano();
 
         cv_img.toImageMsg(img_msg);
 
         pub.publish(img_msg);
+
+	img_msg.header.stamp = ros::Time::now();
 
         std::cout << "time to stitch : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
 

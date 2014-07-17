@@ -34,10 +34,10 @@ void SOFTWRAPP::WrapSphCorr2(int bw, const cv::Mat &sphPattern, const cv::Mat &s
     double *signal, *pattern ;
     double alpha, beta, gamma ;
 
-    cv::Mat Ssignal, Spattern;
+//    cv::Mat Ssignal, Spattern;
 
-    sphPattern.convertTo(Spattern,CV_64F);
-    sphSignal.convertTo(Ssignal,CV_64F);
+//    sphPattern.convertTo(Spattern,CV_64F);
+//    sphSignal.convertTo(Ssignal,CV_64F);
 
     n = 2 * bw ;
 
@@ -232,9 +232,12 @@ void SOFTWRAPP::DispSphHarm(const harmCoeff &sphHarm)
 
 void SOFTWRAPP::DispRotEst(const cv::Vec3f &rotation)
 {
-    std::cout<<"\nRotation :\n alpha = "<<rotation[0]<<
-             "\n beta  = "<<rotation[1]<<
-             "\n gamma = "<<rotation[2]<<std::endl<<std::endl;
+    std::cout<<"\n %Rotation\n %alpha = "<<rotation[0]<<
+             ";\n %beta  = "<<rotation[1]<<
+             ";\n %gamma = "<<rotation[2]<<";"<<std::endl<<std::endl;
+
+    std::cout<<"\n sumZ = [sumZ;"<<rotation[0]+rotation[2]<<"];"<<std::endl<<std::endl;
+
 }
 
 

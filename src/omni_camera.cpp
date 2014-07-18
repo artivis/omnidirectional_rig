@@ -10,7 +10,6 @@ OmniCamera::OmniCamera(const std::string &paramPath)
 
 OmniCamera::~OmniCamera()
 {
-
 }
 
 bool OmniCamera::_loadParam(const std::string &paramPath)
@@ -101,6 +100,8 @@ cv::Mat OmniCamera::GetMask(){
 void OmniCamera::setImage(const cv::Mat &image)
 {
     this->_Frame = image.clone();
+    if(this->_isSampled) cv::resize(this->_Frame,this->_Frame,cv::Size(),
+                                    1.0/this->_sampling_ratio,1.0/this->_sampling_ratio);
 }
 
 
@@ -179,10 +180,12 @@ void OmniCamera::LoadMask(const std::string& maskFile){
     tmp.convertTo(this->_Mask,CV_8UC1);
 }
 
-void OmniCamera::readImage(std::string file){
+void OmniCamera::readImage(const std::string &file){
 
-    ROS_DEBUG_STREAM("Reading image " << file.c_str());
+    ROS_DEBUG_STREAM("Reading image " << file);
     this->_Frame = cv::imread(file);
+    if(this->_isSampled) cv::resize(this->_Frame,this->_Frame,cv::Size(),
+                                    1.0/this->_sampling_ratio,1.0/this->_sampling_ratio);
 }
 
 void OmniCamera::Im2Sph(int rows,int cols){
@@ -258,7 +261,6 @@ cv::Vec3f OmniCamera::Pix2Sph(int ind_row, int ind_col)
 
 void OmniCamera::DownSample(int sampling_ratio)
 {
-
     if (!this->IsInit()) return;
 
     this->_cameraParam.imSize.cols /= sampling_ratio;
@@ -268,13 +270,10 @@ void OmniCamera::DownSample(int sampling_ratio)
     this->_cameraParam.intrinParam.at<float>(2,2) = 1;
 
     if (!this->_Frame.empty()) cv::resize(this->_Frame,this->_Frame,cv::Size(),1.0/sampling_ratio,1.0/sampling_ratio);
-
     if (!this->_Mask.empty()) cv::resize(this->_Mask,this->_Mask,cv::Size(),1.0/sampling_ratio,1.0/sampling_ratio);
-
     if (!this->_LUTsphere.empty()) this->Im2Sph(this->_cameraParam.imSize.rows,this->_cameraParam.imSize.cols);
 
     this->_isSampled = true;
-
     this->_sampling_ratio = sampling_ratio;
 }
 

@@ -68,9 +68,10 @@ int main(int argc, char** argv){
 //    cv::imshow("pano",omniSys.GetPano());
 //    cv::waitKey(0);
 //    cv::destroyWindow("pano");
-//    return 25;
+//    return 0;
 
     std::vector< cv::Mat > images;
+
 
     do
     {
@@ -94,8 +95,6 @@ int main(int argc, char** argv){
         img_msg.header.stamp = ros::Time::now();
 
         std::cout << "time to stitch : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
-
-        ros::spinOnce();
 
     }while(cv::waitKey(10) != 'q');
 

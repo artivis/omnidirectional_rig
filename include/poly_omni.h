@@ -8,12 +8,17 @@
 #include "opencv2/photo/photo.hpp"
 
 #include <sensor_msgs/PointCloud.h>
+#include <boost/utility.hpp>
 
 #include <stdio.h>
 
-class OmniCameraRig {
+class OmniCameraRig : boost::noncopyable
+{
 
     public :
+
+//        boost::shared_ptr<OmniCamera> camera_1;
+//        boost::shared_ptr<OmniCamera> camera_2;
 
         OmniCamera *camera_1;
         OmniCamera *camera_2;

@@ -1,7 +1,6 @@
 #include "image_handler.h"
 
 #include "poly_omni.h"
-
 #include "omni_camera.h"
 
 #include <opencv2/core/core.hpp>

@@ -1,13 +1,15 @@
 #ifndef IMAGE_HANDLER_H_
 #define IMAGE_HANDLER_H_
 
+#include <boost/ptr_container/ptr_vector.hpp>
+
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+
 #include <ros/callback_queue.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/image_encodings.h>
-
 #include <message_filters/subscriber.h>
 #include <image_transport/image_transport.h>
 #include <image_transport/subscriber_filter.h>
@@ -60,7 +62,7 @@ class SyncImageHandler
 
 public:
 
-    SyncImageHandler();
+    //SyncImageHandler() :_imageReceived(false) {}
     SyncImageHandler(const std::string &topic1, const std::string &topic2);
     ~SyncImageHandler();
 
@@ -81,12 +83,14 @@ protected:
     void stereoCallback(const sensor_msgs::ImageConstPtr& msgImg1,
                         const sensor_msgs::ImageConstPtr& msgImg2);
 
-    std::vector<sensor_msgs::ImageConstPtr > _images;
-    boost::shared_ptr<image_transport::ImageTransport > _imageTransport;
+    std::vector<sensor_msgs::ImageConstPtr> _images;
+    boost::shared_ptr<image_transport::ImageTransport> _imageTransport;
 
-    boost::shared_ptr<image_transport::SubscriberFilter > _imgSub1, _imgSub2;
+    boost::shared_ptr<image_transport::SubscriberFilter> _imgSub1, _imgSub2;
 
-    boost::shared_ptr<message_filters::Synchronizer<ApproxSync > > _approxSynchronizer;
+//    boost::ptr_vector<image_transport::SubscriberFilter> _imSubs;
+
+    boost::shared_ptr<message_filters::Synchronizer<ApproxSync> > _approxSynchronizer;
 
     bool _imageReceived;
 };

@@ -33,7 +33,7 @@ struct CameraParam{
     cv::Mat intrinParam;
     imageSize imSize;
 
-    CameraParam() : cameraType(""), xi(0), intrinParam(cv::Mat::zeros(3,3,CV_32F)), imSize(0,0) {}
+    CameraParam() : cameraType(""), xi(0), intrinParam(cv::Mat::zeros(3,4,CV_32F)), imSize(0,0) {}
     CameraParam(const std::string& camT_, double xi_, const cv::Mat& param_, const imageSize& imSize_) :
         cameraType(camT_), xi(xi_), intrinParam(param_), imSize(imSize_) {}
 };
@@ -77,7 +77,7 @@ public:
 
     void LoadMask(const std::string&);
 
-    void readImage(std::string file);
+    void readImage(const std::string&);
 
     void Im2Sph(const cv::Size &im = cv::Size(1280,1024));
     void Im2Sph(int rows = 1024,int cols = 1280);

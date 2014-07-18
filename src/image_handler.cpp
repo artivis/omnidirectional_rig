@@ -11,8 +11,13 @@
         {
             ROS_DEBUG("Building image handler");
 
+            std::string transHint;
+            _nh.param("_transport_img",transHint,std::string("raw"));
+
+            image_transport::TransportHints transportHint(transHint);
+
             _nh.setCallbackQueue(&_cbqueue);
-            _subscriber = _it.subscribe(topicName, 1, &SingleImageHandler::topicCallback, this);
+            _subscriber = _it.subscribe(topicName, 1, &SingleImageHandler::topicCallback, this, transportHint);
         }
 
         SingleImageHandler::~SingleImageHandler()
@@ -139,15 +144,21 @@
             _imageTransport.reset( new image_transport::ImageTransport( _nh));
 
             std::string transHint;
-            _nh.param("_transport_img",transHint,std::string("raw"));
+            _nh.param("/Sync_Image/Transport_Hints",transHint,std::string("raw"));
 
             image_transport::TransportHints transportHint(transHint);
 
-            _imgSub1.reset(new image_transport::SubscriberFilter(*_imageTransport, topic1, 1, transportHint) );
-            _imgSub2.reset(new image_transport::SubscriberFilter(*_imageTransport, topic2, 1, transportHint) );
+            _imgSub1.reset(new image_transport::SubscriberFilter(*_imageTransport, topic1, 1) );
+            _imgSub2.reset(new image_transport::SubscriberFilter(*_imageTransport, topic2, 1) );
 
             _approxSynchronizer.reset( new message_filters::Synchronizer< ApproxSync >(ApproxSync(10),
                                                                                        *_imgSub1, *_imgSub2) );
+
+//            _imSubs.push_back(new image_transport::SubscriberFilter(*_imageTransport, topic1, 1, transportHint));
+//            _imSubs.push_back(new image_transport::SubscriberFilter(*_imageTransport, topic2, 1, transportHint));
+
+//            _approxSynchronizer.reset( new message_filters::Synchronizer< ApproxSync >(ApproxSync(10),
+//                                                                                       _imSubs[0], _imSubs[1]) );
 
             _approxSynchronizer->registerCallback(boost::bind(&SyncImageHandler::stereoCallback, this, _1, _2));
 
@@ -167,7 +178,6 @@
         void SyncImageHandler::waitUntilImages(std::vector<sensor_msgs::ImageConstPtr > &images)
         {
             this->_imageReceived = false;
-            ROS_INFO_STREAM("Waiting until images received");
 
             while (!this->_imageReceived  && ros::ok())
             {
@@ -184,12 +194,12 @@
                 images = std::vector< sensor_msgs::ImageConstPtr >();
             }
             images = this->_images;
+            ROS_INFO_STREAM("Images catched");
         }
 
-        void SyncImageHandler::waitUntilImages(std::vector<cv::Mat > &images)
+        void SyncImageHandler::waitUntilImages(std::vector<cv::Mat> &images)
         {
             this->_imageReceived = false;
-            ROS_INFO_STREAM("Waiting until images received");
 
             while (!this->_imageReceived  && ros::ok())
             {
@@ -198,25 +208,31 @@
             getImages(images);
         }
 
-        void SyncImageHandler::getImages(std::vector<cv::Mat > &images)
+        void SyncImageHandler::getImages(std::vector<cv::Mat> &images)
         {
             if (!this->_imageReceived)
             {
                 ROS_ERROR("Called getImage() without any image received");
-                images = std::vector<cv::Mat >();
+                images = std::vector<cv::Mat>();
             }
 
             cv_bridge::CvImagePtr cvPtr;
 
-            BOOST_FOREACH(const sensor_msgs::ImageConstPtr &img, this->_images)
+            images.resize(this->_images.size());
+            int ind = 0;
+
+            BOOST_FOREACH(const sensor_msgs::ImageConstPtr img, this->_images)
             {
                 cvPtr = cv_bridge::toCvCopy(img,"8UC3");
-                images.push_back(cvPtr->image);
+                images[ind] = cvPtr->image.clone();
+                ++ind;
             }
         }
 
-        void SyncImageHandler::saveImages(const std::string &common_name, const std::vector<cv::Mat > &images)
+        void SyncImageHandler::saveImages(const std::string &common_name, const std::vector<cv::Mat> &images)
         {
+            if (images.empty()) return;
+
             ROS_DEBUG_STREAM("Saving images in " << common_name);
 
             int imgnum = 0;

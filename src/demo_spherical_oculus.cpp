@@ -9,7 +9,7 @@
 // //needed by demo from image files
 #include <boost/range/combine.hpp>
 #include <boost/tuple/tuple.hpp>
-
+#include <boost/foreach.hpp>
 
 int main(int argc, char** argv){
 
@@ -72,67 +72,63 @@ int main(int argc, char** argv){
     ros::AsyncSpinner aspin(1);
     aspin.start();
 
-    cv::namedWindow("imageName", CV_WINDOW_AUTOSIZE );
+//    cv::namedWindow("imageName", CV_WINDOW_AUTOSIZE );
 
-    do
-    {
-        syncImageHandler.waitUntilImages(images);
+//    do
+//    {
+//        syncImageHandler.waitUntilImages(images);
 
-        cv::imshow( "imageName", images[1] );
+//        cv::imshow( "imageName", images[1] );
 
-        omniSys.camera_1->setImage(images[0]);
-        omniSys.camera_2->setImage(images[1]);
+//        omniSys.camera_1->setImage(images[0]);
+//        omniSys.camera_2->setImage(images[1]);
 
-//        time = (double)cv::getTickCount();
+////        time = (double)cv::getTickCount();
 
-        omniSys.MessRGBSph(ptsCld);
+//        omniSys.MessRGBSph(ptsCld);
 
-        //std::cout << "time to comp sphere : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
+//        //std::cout << "time to comp sphere : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
 
-//        time = (double)cv::getTickCount();
+////        time = (double)cv::getTickCount();
 
-        pub_CloudSph.publish(ptsCld);
+//        pub_CloudSph.publish(ptsCld);
 
-        //std::cout << "time to publish sphere : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
+//        //std::cout << "time to publish sphere : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
 
-//        ros::spinOnce();
+////        ros::spinOnce();
 
-//        images.clear();
+////        images.clear();
 
-        //TODO : exit on key pressing
-//        exit = cv::waitKey(10);
-//        if(exit == 27) break;
-        cv::waitKey(1000);
+//        //TODO : exit on key pressing
+////        exit = cv::waitKey(10);
+////        if(exit == 27) break;
+//        cv::waitKey(1000);
 
-    } while (ros::ok());
+//    } while (ros::ok());
 
 
     // Demo example : image from folder
 
-//    std::set<std::string> imagesR = loadFilesName("/home/student/JeremieDeray/rosbag/runvideo/images/1/left/");
-//    std::set<std::string> imagesL = loadFilesName("/home/student/JeremieDeray/rosbag/runvideo/images/1/right/");
+    std::set<std::string> imagesR = loadFilesName("/home/student/JeremieDeray/rosbag/runvideo/images/1/left/");
+    std::set<std::string> imagesL = loadFilesName("/home/student/JeremieDeray/rosbag/runvideo/images/1/right/");
 
-//    std::string file1,file2;
+    std::string file1,file2;
 
-//    BOOST_FOREACH(boost::tie(file1,file2), boost::combine(imagesR,imagesL))
-//    {
-//        omniSys.camera_1->readImage(file1);
-//        omniSys.camera_2->readImage(file2);
+    BOOST_FOREACH(boost::tie(file1,file2), boost::combine(imagesR,imagesL))
+    {
+        omniSys.camera_1->readImage(file1);
+        omniSys.camera_2->readImage(file2);
 
-//        omniSys.MessRGBSph(ptsCld);
+        omniSys.MessRGBSph(ptsCld);
 
-//        std::cout << ptsCld.points.at(9000) << std::endl;
-//        std::cout << ptsCld.channels.at(0).values[45000] << " " << ptsCld.channels.at(1).values[45000]<< " "
-//                  << ptsCld.channels.at(2).values[45000] << std::endl;
+        pub_CloudSph.publish(ptsCld);
 
-//        pub_CloudSph.publish(ptsCld);
+        ros::spinOnce();
 
-//        ros::spinOnce();
+        cv::waitKey(500);
 
-//        cv::waitKey(500);
-
-//        //TODO : exit on key pressing
-//        //exit = cv::waitKey(100);
-//    }
-//    return 0;
+        //TODO : exit on key pressing
+        //exit = cv::waitKey(100);
+    }
+    return 0;
 }

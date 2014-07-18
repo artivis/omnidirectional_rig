@@ -1,6 +1,6 @@
 #include "image_handler.h"
+#include "poly_omni.h"
 #include "omni_camera.h"
-#include "fisheye.h"
 #include "sssoft.h"
 
 #include <opencv2/core/core.hpp>
@@ -21,7 +21,7 @@ int main(int argc, char** argv)
 
 //    if (argc >= -1 /*&& std::string(argv[1]) != "-h" && std::string(argv[1]) != "--help"*/)
 //    {
-        OmniCamera omniSys("");
+        PolyOmniCamera omniSys;
 
         if (!omniSys.IsInit())
         {

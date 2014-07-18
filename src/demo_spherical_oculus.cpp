@@ -7,13 +7,13 @@
 #include <string>
 
 // //needed by demo from image files
-//#include <boost/range/combine.hpp>
-//#include <boost/tuple/tuple.hpp>
+#include <boost/range/combine.hpp>
+#include <boost/tuple/tuple.hpp>
 
 
 int main(int argc, char** argv){
 
-    if (argc != 2) ROS_ERROR("Usage: demo_omni_oculus <rootpath_to_conf_files>");
+    if (argc != 3) ROS_ERROR("Usage: demo_omni_oculus <rootpath_to_conf_files>");
 
     int sampling_ratio = atof(argv[1]);
     std::string conf_path = argv[2];
@@ -46,7 +46,8 @@ int main(int argc, char** argv){
     maskCamera_1  = AddPath("etc/images/cam1/Img_mask1.jpg",conf_path);
     maskCamera_2  = AddPath("etc/images/cam2/Img_mask2.jpg",conf_path);
 
-    PolyOmniCamera omniSys(topics_name,path_yamls_cam,extrinParam);
+    SyncImageHandler syncImageHandler(topics_name[0],topics_name[1]);
+    PolyOmniCamera omniSys(path_yamls_cam,extrinParam);
 
     omniSys.DispParam();
 
@@ -64,53 +65,56 @@ int main(int argc, char** argv){
 
     omniSys.PartiallyFillMess(ptsCld);
 
-    do
-    {
-        omniSys.camera_1->ReadFrame();
-        omniSys.camera_2->ReadFrame();
+//    std::vector< cv::Mat > images;
+//    do
+//    {
+//        syncImageHandler.waitUntilImages(images);
 
-//        time = (double)cv::getTickCount();
+//        omniSys.camera_1->setImage(images[0]);
+//        omniSys.camera_2->setImage(images[1]);
 
-        omniSys.MessRGBSph(ptsCld);
+////        time = (double)cv::getTickCount();
 
-        //std::cout << "time to comp sphere : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
+//        omniSys.MessRGBSph(ptsCld);
 
-//        time = (double)cv::getTickCount();
+//        //std::cout << "time to comp sphere : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
 
-        pub_CloudSph.publish(ptsCld);
+////        time = (double)cv::getTickCount();
 
-        //std::cout << "time to publish sphere : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
+//        pub_CloudSph.publish(ptsCld);
 
-        ros::spinOnce();
+//        //std::cout << "time to publish sphere : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
 
-        //TODO : exit on key pressing
-//        exit = cv::waitKey(10);
-//        if(exit == 27) break;
+//        ros::spinOnce();
 
-    }while(1);
+//        //TODO : exit on key pressing
+////        exit = cv::waitKey(10);
+////        if(exit == 27) break;
+
+//    }while(1);
 
 
     // Example of the demo from image folder
 
-//    std::set<std::string> imagesR = loadFilesName("path_to_right_images");
-//    std::set<std::string> imagesL = loadFilesName("path_to_left_images");
+    std::set<std::string> imagesR = loadFilesName("path_to_right_images");
+    std::set<std::string> imagesL = loadFilesName("path_to_left_images");
 
-//    std::string file1,file2;
+    std::string file1,file2;
 
-//    BOOST_FOREACH(boost::tie(file1,file2), boost::combine(imagesR,imagesL))
-//    {
-//        omniSys.camera_1->readImage(file1);
-//        omniSys.camera_2->readImage(file2);
+    BOOST_FOREACH(boost::tie(file1,file2), boost::combine(imagesR,imagesL))
+    {
+        omniSys.camera_1->readImage(file1);
+        omniSys.camera_2->readImage(file2);
 
-//        omniSys.MessRGBSph(ptsCld);
+        omniSys.MessRGBSph(ptsCld);
 
-//        pub_CloudSph.publish(ptsCld);
+        pub_CloudSph.publish(ptsCld);
 
-//        ros::spinOnce();
+        ros::spinOnce();
 
-//        exit = cv::waitKey(100);
-//    }
-
+        //TODO : exit on key pressing
+        //exit = cv::waitKey(100);
+    }
 
 
     return 0;

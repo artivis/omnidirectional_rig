@@ -18,7 +18,14 @@ int main(int argc, char** argv){
     ros::init(argc,argv, "omnicamera_live");
     ros::NodeHandle nh;
 
-    PolyOmniCamera omniSys("");
+    std::vector<std::string> topics_name;
+    std::string topic;
+    nh.param("/spherical_vision/topic_left",topic,std::string("/left/image_raw"));
+    topics_name.push_back(topic);
+    nh.param("/spherical_vision/topic_right",topic,std::string("/right/image_raw"));
+    topics_name.push_back(topic);
+
+    PolyOmniCamera omniSys;
 
     if (!omniSys.IsInit())
     {
@@ -44,6 +51,8 @@ int main(int argc, char** argv){
 
     double time;
 
+    SyncImageHandler syncImageHandler(topics_name[0],topics_name[1]);
+
 
 //     //Test with images from disk
 //    std::string imCam1 = "/home/student/JeremieDeray/rosbag/run3/images/omni/left/025Img_10.8304_-2.4232_0_0_-0.112161_0.99369.jpg";
@@ -61,12 +70,14 @@ int main(int argc, char** argv){
 //    cv::destroyWindow("pano");
 //    return 25;
 
-
+    std::vector< cv::Mat > images;
 
     do
     {
-        omniSys.camera_1->ReadFrame();
-        omniSys.camera_2->ReadFrame();
+        syncImageHandler.waitUntilImages(images);
+
+        omniSys.camera_1->setImage(images[0]);
+        omniSys.camera_2->setImage(images[1]);
 
         time = (double)cv::getTickCount();
 

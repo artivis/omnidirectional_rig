@@ -1,6 +1,6 @@
 #include "image_handler.h"
+#include "poly_omni.h"
 #include "omni_camera.h"
-#include "fisheye.h"
 #include "sssoft.h"
 
 #include <opencv2/core/core.hpp>
@@ -23,7 +23,7 @@ int main(int argc, char** argv){
     im_cam2 = "/home/student/JeremieDeray/rosbag/rotary_table/left/frame0000.jpg";
     im_cam1 = "/home/student/JeremieDeray/rosbag/rotary_table/right/frame0000.jpg";
 
-    OmniCamera omniSys("");
+    PolyOmniCamera omniSys;
 
     if (!omniSys.IsInit())
     {

@@ -13,18 +13,14 @@
 
 class PolyOmniCamera {
 
-    ros::NodeHandle nh_param;
-
     public :
 
         OmniCamera *camera_1;
         OmniCamera *camera_2;
 
-        PolyOmniCamera(const std::string &);
-        PolyOmniCamera(const std::vector<std::string> &topicsName, const std::vector<std::string> &paramPath);
-
-        PolyOmniCamera(const std::vector<std::string> &topicsName, const std::vector<std::string> &cameraParamPath,
-                   const std::string &extrinPath);
+        PolyOmniCamera();
+        PolyOmniCamera(const std::vector<std::string> &paramPath);
+        PolyOmniCamera(const std::vector<std::string> &cameraParamPath, const std::string &extrinPath);
 
         ~PolyOmniCamera();
 
@@ -50,9 +46,9 @@ class PolyOmniCamera {
 
         void PartiallyFillMess(sensor_msgs::PointCloud &);
 
-        void ReadFrame();
+        void setImages(const std::vector<cv::Mat>&);
 
-        bool IsInit();
+        bool IsInit() {return this->_init;}
 
         cv::Mat GetExtrin();
         cv::Mat GetPano();
@@ -91,7 +87,6 @@ class PolyOmniCamera {
 
         int _ind_LUTsph;
 };
-
 
 
 #endif // OMNI_CAMERA_H

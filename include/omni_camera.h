@@ -1,103 +1,119 @@
-#ifndef OMNI_CAMERA_H
-#define OMNI_CAMERA_H
+#ifndef FISHEYE_H
+#define FISHEYE_H
 
-#include <fisheye.h>
-#include <feature_extractor.h>
+#include <vector>
+#include <string>
+#include <iostream>
+#include <fstream>
+#include <complex>
 
-#include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/photo/photo.hpp"
 
-#include <sensor_msgs/PointCloud.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <ros/ros.h>
+#include <cv_bridge/cv_bridge.h>
+#include <yaml-cpp/yaml.h>
 
-#include <stdio.h>
+#include "image_handler.h"
+#include "usefull.h"
 
-class OmniCamera {
+struct imageSize{
 
-    ros::NodeHandle nh_param;
+    int rows;
+    int cols;
 
-    public :
+    imageSize() : rows(0), cols(0) {}
+    imageSize(int rows_,int cols_) : rows(rows_), cols(cols_) {}
+};
 
-        FishEye *camera_1;
-        FishEye *camera_2;
+struct CameraParam{
 
-        OmniCamera(const std::string &);
-        OmniCamera(const std::vector<std::string> &topicsName, const std::vector<std::string> &paramPath);
+    std::string cameraType;
+    double xi;
+    cv::Mat intrinParam;
+    imageSize imSize;
 
-        OmniCamera(const std::vector<std::string> &topicsName, const std::vector<std::string> &cameraParamPath,
-                   const std::string &extrinPath);
+    CameraParam() : cameraType(""), xi(0), intrinParam(cv::Mat::zeros(3,3,CV_32F)), imSize(0,0) {}
+    CameraParam(const std::string& camT_, double xi_, const cv::Mat& param_, const imageSize& imSize_) :
+        cameraType(camT_), xi(xi_), intrinParam(param_), imSize(imSize_) {}
+};
 
-        ~OmniCamera();
 
-        bool LoadCalibration(const std::string&);
+class OmniCamera
+{
+public:
 
-        void DispParam();
+    OmniCamera();
+    OmniCamera(const std::string &paramPath);
 
-        void LoadLUT(const std::vector<std::string> &, const std::vector<std::string> &);
+    ~OmniCamera();
 
-        void MergeLUTWrap(bool heal = false);
+    std::string GetType();
+    double GetXi();
+    cv::Mat GetIntrinsic();
+    imageSize GetImageSize();
+    cv::Mat GetLUT();
+    cv::Mat GetLUT(const std::string &);
+    cv::Mat GetMask();
+    cv::Mat getImage();
+    bool IsSampled();
 
-        void MergeLUTHeal();
+    bool IsInit();
 
-        void MergeLUTSph();
+    void SetType(const std::string&);
+    void SetXi(double);
+    void SetIntrinsic(const cv::Mat&);
+    void SetImageSize(const imageSize&);
+    void SetImageSize(int rows, int cols);
+    void SetLUTSph(const cv::Mat&);
 
-        void RescaleWrapLUT(cv::Size size = cv::Size(1200,400));
+    void setImage(const cv::Mat&);
 
-        void StitchImage(bool INPAIN_FLAG = 0);
+//    void ReadFrame();
 
-        void SaveImage(const std::string &filename = "panoramicImage.jpg");
+    void ReleaseLut();
 
-        void ApplyBaseline();
+    void DispParam();
 
-        void MessRGBSph(sensor_msgs::PointCloud &);
+    void LoadMask(const std::string&);
 
-        void PartiallyFillMess(sensor_msgs::PointCloud &);
+    void readImage(std::string file);
 
-        void ReadFrame();
+    void Im2Sph(const cv::Size &im = cv::Size(1280,1024));
+    void Im2Sph(int rows = 1024,int cols = 1280);
+    cv::Vec3f Pix2Sph(int ind_row, int ind_col);
 
-        bool IsInit();
+    void Sph2Pano();
 
-        cv::Mat GetExtrin();
-        cv::Mat GetPano();
-        cv::Mat GetLUT();
+    void Sph2Im(const cv::Mat&);
+    void Sph2Im(const cv::Mat&, cv::Mat&);
+    cv::Vec2i Sph2Im(float, float, float);
 
-        void SetExtrin(const cv::Mat &);
-        void SetPanoSize(cv::Size &);
-        void SetPanoSize(int,int);
+    void DownSample(int sampling_ratio = 1);
 
-        void DownSample(int sampling_ratio = 1);
 
-        void Sph2Pano();
+//private :
 
-        void Sph2HealPano();
 
-        void SampSphFct(cv::Mat&, int bandwidth = 64);
+    CameraParam _cameraParam;
 
-    private :
+//    boost::shared_ptr< pal::slam::ImageHandler > image_handler;
 
-        void Rotate90roll();
+    bool _init;
 
-        cv::Mat _extrin;
+    cv::Mat _LUTsphere;
+    cv::Mat _LUT_wrap_im;
+    cv::Mat _LUT_sampSph_im;
 
-        bool _init;
+    cv::Mat _Mask;
+    cv::Mat _Frame;
 
-        cv::Size _panoSize;
+    bool _loadParam(const std::string &paramPath);
 
-        cv::Mat _pano;
-
-        cv::Mat _LUTsphere;
-        cv::Mat _LUT_wrap_im;
-//        cv::Mat _LUT_heal_wrap_im;
-        cv::Mat _LUTsph_im;
-
-        bool _isSampled;
-        int _sampling_ratio;
-
-        int _ind_LUTsph;
+    bool _isSampled;
+    int _sampling_ratio;
 };
 
 
 
-#endif // OMNI_CAMERA_H
-
-
-
+#endif // FISHEYE_H

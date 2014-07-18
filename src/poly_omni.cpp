@@ -1,89 +1,58 @@
 #include <poly_omni.h>
 
-PolyOmniCamera::PolyOmniCamera(const std::string &packPath)
+PolyOmniCamera::PolyOmniCamera()
 {
+    this->camera_1 = new OmniCamera("etc/calib/Pal_intrinsicParam_cam1.yaml");
+    this->camera_2 = new OmniCamera("etc/calib/Pal_intrinsicParam_cam2.yaml");
 
-    std::vector<std::string> path_yamls_cam;
-    std::vector<std::string> topics_name;
-    std::string maskCamera_1;
-    std::string maskCamera_2;
-    std::string extrinParam;
+    this->LoadCalibration("etc/calib/Pal_extrinsicParam.yaml");
 
-    path_yamls_cam.push_back(("etc/calib/Pal_intrinsicParam_cam1.yaml"));
-    path_yamls_cam.push_back(("etc/calib/Pal_intrinsicParam_cam2.yaml"));
-
-    maskCamera_2  = ("etc/images/cam1/Img_mask1.jpg");
-    maskCamera_1  = ("etc/images/cam2/Img_mask2.jpg");
-
-    topics_name.push_back(("/right/image_raw"));
-    topics_name.push_back(("/left/image_raw"));
-
-    extrinParam = ("etc/calib/Pal_extrinsicParam.yaml");
-
-    this->camera_1 = new OmniCamera(topics_name.at(0),path_yamls_cam.at(0));
-
-    this->camera_2 = new OmniCamera(topics_name.at(1),path_yamls_cam.at(1));
-
-    this->LoadCalibration(extrinParam);
-
-    this->camera_1->LoadMask(maskCamera_1);
-    this->camera_2->LoadMask(maskCamera_2);
+    // ! may need to be swap depending on cameras initialization order.
+    // TODO : find way to assign to a camera its correct mask
+    this->camera_1->LoadMask("etc/images/cam2/Img_mask2.jpg");
+    this->camera_2->LoadMask("etc/images/cam1/Img_mask1.jpg");
 
     this->_panoSize = cv::Size(1200,400);
 
     this->_isSampled = false;
-
     this->_sampling_ratio = 1;
-
     this->_ind_LUTsph = 0;
 
     this->_init = this->camera_1->IsInit() && this->camera_2->IsInit() && true;
-
 }
 
 
-PolyOmniCamera::PolyOmniCamera(const std::vector<std::string> &topicsName, const std::vector<std::string> &cameraParamPath)
+PolyOmniCamera::PolyOmniCamera(const std::vector<std::string> &cameraParamPath)
 {
+    this->camera_1 = new OmniCamera(cameraParamPath.at(0));
+    this->camera_2 = new OmniCamera(cameraParamPath.at(1));
 
-    this->camera_1 = new OmniCamera(topicsName.at(0),cameraParamPath.at(0));
-
-    this->camera_2 = new OmniCamera(topicsName.at(1),cameraParamPath.at(1));
-
-    this->_panoSize = cv::Size(1200,400);
 
     cv::Mat extrin = cv::Mat::zeros(3,4,CV_32F);
-
     extrin(cv::Rect(0,0,3,3)) = GetRotationMat(0,180,0);
-
     extrin.at<float>(0,3) = 0.;
     extrin.at<float>(1,3) = 0.;
     extrin.at<float>(2,3) = 0.;
-
     extrin.copyTo(this->_extrin,CV_32F);
 
+    this->_panoSize = cv::Size(1200,400);
     this->_isSampled = false;
-
     this->_sampling_ratio = 1;
-
     this->_ind_LUTsph = 0;
 
     this->_init = this->camera_1->IsInit() && this->camera_2->IsInit() && true;
 }
 
-PolyOmniCamera::PolyOmniCamera(const std::vector<std::string> &topicsName, const std::vector<std::string> &cameraParamPath, const std::string &extrinPath)
+PolyOmniCamera::PolyOmniCamera(const std::vector<std::string> &cameraParamPath, const std::string &extrinPath)
 {
-    this->camera_1 = new OmniCamera(topicsName.at(0),cameraParamPath.at(0));
-
-    this->camera_2 = new OmniCamera(topicsName.at(1),cameraParamPath.at(1));
+    this->camera_1 = new OmniCamera(cameraParamPath.at(0));
+    this->camera_2 = new OmniCamera(cameraParamPath.at(1));
 
     this->LoadCalibration(extrinPath);
 
     this->_panoSize = cv::Size(1200,400);
-
     this->_isSampled = false;
-
     this->_sampling_ratio = 1;
-
     this->_ind_LUTsph = 0;
 
     this->_init = this->camera_1->IsInit() && this->camera_2->IsInit() && true;
@@ -93,10 +62,6 @@ PolyOmniCamera::~PolyOmniCamera(){
 
     delete this->camera_1;
     delete this->camera_2;
-}
-
-bool PolyOmniCamera::IsInit(){
-    return this->_init;
 }
 
 bool PolyOmniCamera::LoadCalibration(const std::string& paramPath){
@@ -118,11 +83,11 @@ bool PolyOmniCamera::LoadCalibration(const std::string& paramPath){
     return true;
 }
 
-void PolyOmniCamera::ReadFrame()
-{
-    this->camera_1->ReadFrame();
-    this->camera_2->ReadFrame();
-}
+//void PolyOmniCamera::ReadFrame()
+//{
+//    this->camera_1->ReadFrame();
+//    this->camera_2->ReadFrame();
+//}
 
 
 void PolyOmniCamera::DispParam(){
@@ -303,27 +268,28 @@ void PolyOmniCamera::SaveImage(const std::string &filename)
     cv::imwrite(filename,this->_pano);
 }
 
+void PolyOmniCamera::setImages(const std::vector<cv::Mat> &images)
+{
+    if(!this->IsInit()) return;
+    this->camera_1->setImage(images[0]);
+    this->camera_1->setImage(images[1]);
+}
+
 
 void PolyOmniCamera::ApplyBaseline()
 {
     if(!this->IsInit() || this->camera_2->_LUTsphere.empty()) return;
 
-//    cv::Mat tt = GetRotationMat(0,180,0);
-//    tt.convertTo(tt,CV_32F);
-
-    cv::Mat tmp = this->_extrin(cv::Rect(0,0,3,3)) * this->camera_2->_LUTsphere; //
-
+    cv::Mat tmp = this->_extrin(cv::Rect(0,0,3,3)) * this->camera_2->_LUTsphere;
     tmp.convertTo(this->camera_2->_LUTsphere,CV_32F);
 }
 
 void PolyOmniCamera::Rotate90roll()
 {
     cv::Mat Rot90roll = GetRotationMat(-90,0,90);
-
     Rot90roll.convertTo(Rot90roll,this->_LUTsphere.type());
 
     cv::Mat tmp = Rot90roll * this->_LUTsphere;
-
     tmp.convertTo(this->_LUTsphere,CV_32F); // in theorz could be removed
 }
 

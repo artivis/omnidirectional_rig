@@ -110,9 +110,9 @@ include_directories(${catkin_INCLUDE_DIRS} include)
 add_executable(omni_localization_node
                            src/image_handler.cpp
                            src/omni_localization_node.cpp
-                           src/omni_camera.cpp
+                           src/poly_omni.cpp
                            src/feature_extractor.cpp
-                           src/fisheye.cpp
+                           src/omni_camera.cpp
                            src/usefull.cpp
 
 )
@@ -120,35 +120,35 @@ target_link_libraries(omni_localization_node
    ${catkin_LIBRARIES}
 )
 
-add_executable(demo_omni_oculus
+add_executable(demo_spherical_oculus
                            src/image_handler.cpp
-                           src/Demo_Omni_Oculus.cpp
+                           src/demo_spherical_oculus.cpp
+                           src/poly_omni.cpp
                            src/omni_camera.cpp
-                           src/fisheye.cpp
                            src/usefull.cpp
 
 )
-target_link_libraries(demo_omni_oculus
+target_link_libraries(demo_spherical_oculus
    ${catkin_LIBRARIES}
 )
 
-add_executable(demo_omni_live
+add_executable(demo_spherical_panorama
                            src/image_handler.cpp
-                           src/Demo_Omni_Live.cpp
+                           src/demo_spherical_panorama.cpp
+                           src/poly_omni.cpp
                            src/omni_camera.cpp
-                           src/fisheye.cpp
                            src/usefull.cpp
 
 )
-target_link_libraries(demo_omni_live
+target_link_libraries(demo_spherical_panorama
    ${catkin_LIBRARIES}
 )
 
 add_executable(track_camera_orientation
                            src/image_handler.cpp
                            src/track_camera_orientation.cpp
+                           src/poly_omni.cpp
                            src/omni_camera.cpp
-                           src/fisheye.cpp
                            src/usefull.cpp
                            src/sssoft.cpp
 )
@@ -159,8 +159,8 @@ target_link_libraries(track_camera_orientation
 add_executable(TEST_export_sphHarm_database
                            src/image_handler.cpp
                            src/sph_harm_db.cpp
+                           src/poly_omni.cpp
                            src/omni_camera.cpp
-                           src/fisheye.cpp
                            src/usefull.cpp
                            src/sssoft.cpp
 )

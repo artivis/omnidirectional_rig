@@ -1,5 +1,5 @@
-#ifndef PAL_VISUAL_LOCALIZATION_IMAGE_HANDLER_H_
-#define PAL_VISUAL_LOCALIZATION_IMAGE_HANDLER_H_
+#ifndef IMAGE_HANDLER_H_
+#define IMAGE_HANDLER_H_
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -8,38 +8,85 @@
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/image_encodings.h>
 
+#include <message_filters/subscriber.h>
 #include <image_transport/image_transport.h>
+#include <image_transport/subscriber_filter.h>
+#include <message_filters/time_synchronizer.h>
+#include <message_filters/synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
 
-namespace pal {
-    namespace slam {
 
-        class ImageHandler
-        {
+class SingleImageHandler
+{
 
-        public:
+public:
 
-            ImageHandler(const std::string &topicName);
-            ~ImageHandler();
-            void topicCallback(const sensor_msgs::ImageConstPtr& received_image);
-            bool imageReceived();
-            sensor_msgs::ImageConstPtr getImage();
-            sensor_msgs::ImageConstPtr waitUntilImageReceived();
+    SingleImageHandler(const std::string &topicName);
+    ~SingleImageHandler();
 
-            void saveImage(std::string name, cv::Mat& image);
-            void saveImage(std::string name, IplImage* image);
-            void readImage(std::string file, cv::Mat& img);
+    bool isImageReceived();
 
-        protected:
+    void getImage(sensor_msgs::ImageConstPtr&);
+    void waitUntilImageReceived(sensor_msgs::ImageConstPtr&);
 
-            ros::NodeHandle _nh;
-            ros::CallbackQueue _cbqueue;
-	    //image_transport::ImageTransport it(nh);
-            ros::Subscriber _subscriber;
-            bool _imageReceived;
-            sensor_msgs::ImageConstPtr _image;
-            std::string folder;
-        };
-    }
-}
+    void getImage(cv::Mat&);
+    void waitUntilImageReceived(cv::Mat&);
 
-#endif  // PAL_VISUAL_LOCALIZATION_IMAGE_HANDLER_H_
+    void saveImage(const std::string &name, cv::Mat& image);
+    void saveImage(const std::string &name, IplImage* image);
+    void readImage(const std::string &file, cv::Mat& img);
+
+protected:
+
+    ros::NodeHandle _nh;
+    ros::CallbackQueue _cbqueue;
+    image_transport::ImageTransport _it;
+    image_transport::Subscriber _subscriber;
+    sensor_msgs::ImageConstPtr _image;
+
+    std::string folder;
+    bool _imageReceived;
+
+    void topicCallback(const sensor_msgs::ImageConstPtr& received_image);
+};
+
+
+class SyncImageHandler
+{
+
+    typedef message_filters::sync_policies::ApproximateTime<
+            sensor_msgs::Image,
+            sensor_msgs::Image> ApproxSync;
+
+public:
+
+    SyncImageHandler();
+    SyncImageHandler(const std::string &topic1, const std::string &topic2);
+    ~SyncImageHandler();
+
+    void init(const std::string &topic1, const std::string &topic2);
+
+    void getImages(std::vector<sensor_msgs::ImageConstPtr >&);
+    void waitUntilImages(std::vector<sensor_msgs::ImageConstPtr >&);
+
+    void getImages(std::vector<cv::Mat >&);
+    void waitUntilImages(std::vector<cv::Mat >&);
+
+protected:
+
+    ros::NodeHandle _nh;
+
+    void stereoCallback(const sensor_msgs::ImageConstPtr& msgImg1,
+                        const sensor_msgs::ImageConstPtr& msgImg2);
+
+    std::vector<sensor_msgs::ImageConstPtr > _images;
+    boost::shared_ptr<image_transport::ImageTransport > _imageTransport;
+
+    boost::shared_ptr<image_transport::SubscriberFilter > _imgSub1, _imgSub2;
+
+    boost::shared_ptr<message_filters::Synchronizer<ApproxSync > > _approxSynchronizer;
+
+    bool _imageReceived;
+};
+
+#endif  // IMAGE_HANDLER_H_

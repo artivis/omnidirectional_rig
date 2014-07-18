@@ -62,7 +62,7 @@ class SyncImageHandler
 
 public:
 
-    //SyncImageHandler() :_imageReceived(false) {}
+    SyncImageHandler() :_imageReceived(false) {}
     SyncImageHandler(const std::string &topic1, const std::string &topic2);
     ~SyncImageHandler();
 

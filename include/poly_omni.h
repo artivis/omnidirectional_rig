@@ -2,7 +2,6 @@
 #define OMNI_CAMERA_H
 
 #include <omni_camera.h>
-#include <feature_extractor.h>
 
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/photo/photo.hpp"
@@ -14,14 +13,13 @@
 
 class OmniCameraRig : boost::noncopyable
 {
+public :
 
-    public :
+        boost::shared_ptr<OmniCamera> camera_1;
+        boost::shared_ptr<OmniCamera> camera_2;
 
-//        boost::shared_ptr<OmniCamera> camera_1;
-//        boost::shared_ptr<OmniCamera> camera_2;
-
-        OmniCamera *camera_1;
-        OmniCamera *camera_2;
+//        OmniCamera *camera_1;
+//        OmniCamera *camera_2;
 
         OmniCameraRig();
         OmniCameraRig(const std::vector<std::string> &paramPath);
@@ -71,25 +69,21 @@ class OmniCameraRig : boost::noncopyable
 
         void SampSphFct(cv::Mat&, int bandwidth = 64);
 
-    private :
+private :
 
         void Rotate90roll();
 
         cv::Mat _extrin;
-
-        bool _init;
-
         cv::Size _panoSize;
-
         cv::Mat _pano;
-
         cv::Mat _LUTsphere;
         cv::Mat _LUT_wrap_im;
         cv::Mat _LUTsph_im;
 
+        bool _init;
         bool _isSampled;
-        int _sampling_ratio;
 
+        int _sampling_ratio;
         int _ind_LUTsph;
 };
 

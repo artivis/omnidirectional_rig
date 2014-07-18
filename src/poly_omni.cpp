@@ -2,8 +2,8 @@
 
 OmniCameraRig::OmniCameraRig()
 {
-//    this->camera_1.reset( new OmniCamera("etc/calib/Pal_intrinsicParam_cam1.yaml") );
-//    this->camera_2.reset( new OmniCamera("etc/calib/Pal_intrinsicParam_cam2.yaml") );
+    this->camera_1.reset( new OmniCamera("etc/calib/Pal_intrinsicParam_cam1.yaml") );
+    this->camera_2.reset( new OmniCamera("etc/calib/Pal_intrinsicParam_cam2.yaml") );
 
     this->LoadCalibration("etc/calib/Pal_extrinsicParam.yaml");
 
@@ -24,11 +24,11 @@ OmniCameraRig::OmniCameraRig()
 
 OmniCameraRig::OmniCameraRig(const std::vector<std::string> &cameraParamPath)
 {
-//    this->camera_1.reset( new OmniCamera(cameraParamPath.at(0)) );
-//    this->camera_2.reset( new OmniCamera(cameraParamPath.at(1)) );
+    this->camera_1.reset( new OmniCamera(cameraParamPath.at(0)) );
+    this->camera_2.reset( new OmniCamera(cameraParamPath.at(1)) );
 
-    this->camera_1 = new OmniCamera(cameraParamPath.at(0));
-    this->camera_2 = new OmniCamera(cameraParamPath.at(1));
+//    this->camera_1 = new OmniCamera(cameraParamPath.at(0));
+//    this->camera_2 = new OmniCamera(cameraParamPath.at(1));
 
     cv::Mat extrin = cv::Mat::zeros(3,4,CV_32F);
     extrin(cv::Rect(0,0,3,3)) = GetRotationMat(0,180,0);
@@ -47,11 +47,11 @@ OmniCameraRig::OmniCameraRig(const std::vector<std::string> &cameraParamPath)
 
 OmniCameraRig::OmniCameraRig(const std::vector<std::string> &cameraParamPath, const std::string &extrinPath)
 {
-//    this->camera_1.reset( new OmniCamera(cameraParamPath.at(0)) );
-//    this->camera_2.reset( new OmniCamera(cameraParamPath.at(1)) );
+    this->camera_1.reset( new OmniCamera(cameraParamPath.at(0)) );
+    this->camera_2.reset( new OmniCamera(cameraParamPath.at(1)) );
 
-    this->camera_1 = new OmniCamera(cameraParamPath.at(0));
-    this->camera_2 = new OmniCamera(cameraParamPath.at(1));
+//    this->camera_1 = new OmniCamera(cameraParamPath.at(0));
+//    this->camera_2 = new OmniCamera(cameraParamPath.at(1));
 
     this->LoadCalibration(extrinPath);
 
@@ -65,8 +65,8 @@ OmniCameraRig::OmniCameraRig(const std::vector<std::string> &cameraParamPath, co
 
 OmniCameraRig::~OmniCameraRig(){
 
-    delete this->camera_1;
-    delete this->camera_2;
+//    delete this->camera_1;
+//    delete this->camera_2;
 
 }
 
@@ -401,16 +401,6 @@ void OmniCameraRig::MessRGBSph(sensor_msgs::PointCloud &PointCloud)
             PointCloud.channels[0].values[i] = ((*ptr_pix)[2])/255.0; //r
             PointCloud.channels[1].values[i] = ((*ptr_pix)[1])/255.0; //g
             PointCloud.channels[2].values[i] = ((*ptr_pix)[0])/255.0; //b
-
-//            std::cout << ((*ptr_pix)[2])/255.0 << std::endl ;
-//            std::cout << ((*ptr_pix)[1])/255.0 << std::endl ;
-//            std::cout << ((*ptr_pix)[0])/255.0 << std::endl ;
-
-//            std::cout << PointCloud.channels[0].values[i] << std::endl ;
-//            std::cout << PointCloud.channels[1].values[i] << std::endl ;
-//            std::cout << PointCloud.channels[2].values[i] << std::endl ;
-
-//            std::cout << std::endl <.c_str()< std::endl << std::endl << std::endl ;
         }
 
         row_ind++;

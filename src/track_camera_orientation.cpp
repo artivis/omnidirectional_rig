@@ -5,6 +5,8 @@
 
 #include <opencv2/core/core.hpp>
 
+#include <boost/foreach.hpp>
+
 #include <iostream>
 #include <string>
 

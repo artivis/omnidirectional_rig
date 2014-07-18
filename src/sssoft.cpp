@@ -2,7 +2,6 @@
 
 #include <math.h>
 #include <stdlib.h>
-
 #include <fftw3.h>
 
 #include "opencv2/core/core.hpp"

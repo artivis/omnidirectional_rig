@@ -9,8 +9,6 @@ find_package(catkin REQUIRED COMPONENTS
     std_msgs
     cv_bridge
     image_transport
-    vocabulary_tree
-    libsiftfast
     soft20
 )
 
@@ -111,7 +109,6 @@ add_executable(omni_localization_node
                            src/image_handler.cpp
                            src/omni_localization_node.cpp
                            src/poly_omni.cpp
-                           src/feature_extractor.cpp
                            src/omni_camera.cpp
                            src/usefull.cpp
 

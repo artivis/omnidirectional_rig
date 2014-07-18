@@ -7,7 +7,6 @@
 #include <fstream>
 #include <complex>
 
-
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <ros/ros.h>
@@ -66,18 +65,15 @@ public:
     void SetImageSize(const imageSize&);
     void SetImageSize(int rows, int cols);
     void SetLUTSph(const cv::Mat&);
-
     void setImage(const cv::Mat&);
 
-//    void ReadFrame();
+    void readImage(const std::string&);
 
     void ReleaseLut();
 
     void DispParam();
 
     void LoadMask(const std::string&);
-
-    void readImage(const std::string&);
 
     void Im2Sph(const cv::Size &im = cv::Size(1280,1024));
     void Im2Sph(int rows = 1024,int cols = 1280);
@@ -91,13 +87,10 @@ public:
 
     void DownSample(int sampling_ratio = 1);
 
-
 //private :
 
 
     CameraParam _cameraParam;
-
-//    boost::shared_ptr< pal::slam::ImageHandler > image_handler;
 
     bool _init;
 

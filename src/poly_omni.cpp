@@ -1,6 +1,6 @@
 #include <poly_omni.h>
 
-PolyOmniCamera::PolyOmniCamera()
+OmniCameraRig::OmniCameraRig()
 {
     this->camera_1 = new OmniCamera("etc/calib/Pal_intrinsicParam_cam1.yaml");
     this->camera_2 = new OmniCamera("etc/calib/Pal_intrinsicParam_cam2.yaml");
@@ -22,7 +22,7 @@ PolyOmniCamera::PolyOmniCamera()
 }
 
 
-PolyOmniCamera::PolyOmniCamera(const std::vector<std::string> &cameraParamPath)
+OmniCameraRig::OmniCameraRig(const std::vector<std::string> &cameraParamPath)
 {
     this->camera_1 = new OmniCamera(cameraParamPath.at(0));
     this->camera_2 = new OmniCamera(cameraParamPath.at(1));
@@ -43,7 +43,7 @@ PolyOmniCamera::PolyOmniCamera(const std::vector<std::string> &cameraParamPath)
     this->_init = this->camera_1->IsInit() && this->camera_2->IsInit() && true;
 }
 
-PolyOmniCamera::PolyOmniCamera(const std::vector<std::string> &cameraParamPath, const std::string &extrinPath)
+OmniCameraRig::OmniCameraRig(const std::vector<std::string> &cameraParamPath, const std::string &extrinPath)
 {
     this->camera_1 = new OmniCamera(cameraParamPath.at(0));
     this->camera_2 = new OmniCamera(cameraParamPath.at(1));
@@ -58,13 +58,13 @@ PolyOmniCamera::PolyOmniCamera(const std::vector<std::string> &cameraParamPath, 
     this->_init = this->camera_1->IsInit() && this->camera_2->IsInit() && true;
 }
 
-PolyOmniCamera::~PolyOmniCamera(){
+OmniCameraRig::~OmniCameraRig(){
 
     delete this->camera_1;
     delete this->camera_2;
 }
 
-bool PolyOmniCamera::LoadCalibration(const std::string& paramPath){
+bool OmniCameraRig::LoadCalibration(const std::string& paramPath){
 
     cv::FileStorage fs(paramPath,cv::FileStorage::READ);
 
@@ -83,14 +83,7 @@ bool PolyOmniCamera::LoadCalibration(const std::string& paramPath){
     return true;
 }
 
-//void PolyOmniCamera::ReadFrame()
-//{
-//    this->camera_1->ReadFrame();
-//    this->camera_2->ReadFrame();
-//}
-
-
-void PolyOmniCamera::DispParam(){
+void OmniCameraRig::DispParam(){
 
     if(this->camera_1->IsInit()) {
         this->camera_1->DispParam();
@@ -110,34 +103,34 @@ void PolyOmniCamera::DispParam(){
 }
 
 
-cv::Mat PolyOmniCamera::GetExtrin(){
+cv::Mat OmniCameraRig::GetExtrin(){
     return this->_extrin;
 }
 
-cv::Mat PolyOmniCamera::GetPano(){
+cv::Mat OmniCameraRig::GetPano(){
     return this->_pano;
 }
 
-cv::Mat PolyOmniCamera::GetLUT(){
+cv::Mat OmniCameraRig::GetLUT(){
     return this->_LUT_wrap_im;
 }
 
-void PolyOmniCamera::SetExtrin(const cv::Mat &extrin){
+void OmniCameraRig::SetExtrin(const cv::Mat &extrin){
     this->_extrin = extrin;
 
 }
 
-void PolyOmniCamera::SetPanoSize(cv::Size &panoSize)
+void OmniCameraRig::SetPanoSize(cv::Size &panoSize)
 {
     this->_panoSize = panoSize;
 }
 
-void PolyOmniCamera::SetPanoSize(int rows, int cols)
+void OmniCameraRig::SetPanoSize(int rows, int cols)
 {
     this->_panoSize = cv::Size(cols,rows);
 }
 
-void PolyOmniCamera::MergeLUTWrap(bool heal)
+void OmniCameraRig::MergeLUTWrap(bool heal)
 {
     if(this->camera_1->_LUTsphere.empty() || this->camera_2->_LUTsphere.empty())
     {
@@ -159,7 +152,7 @@ void PolyOmniCamera::MergeLUTWrap(bool heal)
     }
 }
 
-void PolyOmniCamera::MergeLUTHeal()
+void OmniCameraRig::MergeLUTHeal()
 {
     if(this->camera_1->_LUTsphere.empty() || this->camera_2->_LUTsphere.empty())
     {
@@ -176,7 +169,7 @@ void PolyOmniCamera::MergeLUTHeal()
     }
 }
 
-void PolyOmniCamera::MergeLUTSph()
+void OmniCameraRig::MergeLUTSph()
 {
     if(this->camera_1->_LUTsphere.empty() || this->camera_2->_LUTsphere.empty()) return;
 
@@ -190,7 +183,7 @@ void PolyOmniCamera::MergeLUTSph()
     tmp.convertTo(this->_LUTsphere,CV_32FC1);
 }
 
-void PolyOmniCamera::RescaleWrapLUT(cv::Size size)
+void OmniCameraRig::RescaleWrapLUT(cv::Size size)
 {
     double min,max;
 
@@ -207,7 +200,7 @@ void PolyOmniCamera::RescaleWrapLUT(cv::Size size)
     this->_pano = cv::Mat::zeros(size.height,size.width,this->_pano.type());
 }
 
-void PolyOmniCamera::StitchImage(bool INPAIN_FLAG)
+void OmniCameraRig::StitchImage(bool INPAIN_FLAG)
 {
     if (!this->IsInit() || this->camera_1->_Frame.empty() || this->camera_2->_Frame.empty() || this->_LUT_wrap_im.empty())
     {
@@ -263,12 +256,12 @@ void PolyOmniCamera::StitchImage(bool INPAIN_FLAG)
 }
 
 
-void PolyOmniCamera::SaveImage(const std::string &filename)
+void OmniCameraRig::SaveImage(const std::string &filename)
 {
     cv::imwrite(filename,this->_pano);
 }
 
-void PolyOmniCamera::setImages(const std::vector<cv::Mat> &images)
+void OmniCameraRig::setImages(const std::vector<cv::Mat> &images)
 {
     if(!this->IsInit()) return;
     this->camera_1->setImage(images[0]);
@@ -276,7 +269,7 @@ void PolyOmniCamera::setImages(const std::vector<cv::Mat> &images)
 }
 
 
-void PolyOmniCamera::ApplyBaseline()
+void OmniCameraRig::ApplyBaseline()
 {
     if(!this->IsInit() || this->camera_2->_LUTsphere.empty()) return;
 
@@ -284,7 +277,7 @@ void PolyOmniCamera::ApplyBaseline()
     tmp.convertTo(this->camera_2->_LUTsphere,CV_32F);
 }
 
-void PolyOmniCamera::Rotate90roll()
+void OmniCameraRig::Rotate90roll()
 {
     cv::Mat Rot90roll = GetRotationMat(-90,0,90);
     Rot90roll.convertTo(Rot90roll,this->_LUTsphere.type());
@@ -293,7 +286,7 @@ void PolyOmniCamera::Rotate90roll()
     tmp.convertTo(this->_LUTsphere,CV_32F); // in theorz could be removed
 }
 
-void PolyOmniCamera::PartiallyFillMess(sensor_msgs::PointCloud &PointCloud){
+void OmniCameraRig::PartiallyFillMess(sensor_msgs::PointCloud &PointCloud){
 
     if (!this->IsInit()) return;
 
@@ -314,7 +307,8 @@ void PolyOmniCamera::PartiallyFillMess(sensor_msgs::PointCloud &PointCloud){
 
         this->MergeLUTSph();
 
-        this->Rotate90roll(); //change later by a proper tf
+        //TODO retrieve rig pose through tf
+        this->Rotate90roll();
     }
 
     if (this->_LUTsphere.empty()) return;
@@ -371,7 +365,7 @@ void PolyOmniCamera::PartiallyFillMess(sensor_msgs::PointCloud &PointCloud){
     }
 }
 
-void PolyOmniCamera::MessRGBSph(sensor_msgs::PointCloud &PointCloud)
+void OmniCameraRig::MessRGBSph(sensor_msgs::PointCloud &PointCloud)
 {
     if (!this->IsInit()) return;
 
@@ -429,7 +423,7 @@ void PolyOmniCamera::MessRGBSph(sensor_msgs::PointCloud &PointCloud)
 }
 
 
-void PolyOmniCamera::DownSample(int sampling_ratio)
+void OmniCameraRig::DownSample(int sampling_ratio)
 {
     this->camera_1->DownSample(sampling_ratio);
     this->camera_2->DownSample(sampling_ratio);
@@ -442,35 +436,7 @@ void PolyOmniCamera::DownSample(int sampling_ratio)
     this->_sampling_ratio = sampling_ratio;
 }
 
-
-//void PolyOmniCamera::SampSphFct(cv::Mat &sampFct, int bandwidth)
-//{
-//    if (!this->IsInit()) return;
-//    if (this->_pano.empty()) return;
-
-//    cv::Mat tmp;
-//    double min, max;
-//    cv::Size gridSize;
-
-//    gridSize.height = bandwidth*2;
-//    gridSize.width = bandwidth*2;
-
-//    cv::cvtColor(this->_pano,tmp,CV_BGR2GRAY);
-
-//    tmp.convertTo(tmp ,CV_64F);
-
-//    cv::minMaxLoc(tmp,&min,&max);
-
-//    tmp -= min;
-//    tmp /= max;
-
-//    tmp /= cv::norm(tmp);
-
-//    cv::resize(tmp,sampFct,gridSize);
-//}
-
-
-void PolyOmniCamera::Sph2Pano()
+void OmniCameraRig::Sph2Pano()
 {
     if (!this->IsInit()) return;
     if (this->_LUTsphere.empty()) return;
@@ -496,7 +462,7 @@ void PolyOmniCamera::Sph2Pano()
                          ,(double)((this->_panoSize.width-1)/(max-min)),(double)(- (min * ((this->_panoSize.width-1)/(max-min)))));
 }
 
-void PolyOmniCamera::Sph2HealPano()
+void OmniCameraRig::Sph2HealPano()
 {
     if (!this->IsInit()) return;
     if (this->_LUTsphere.empty()) return;

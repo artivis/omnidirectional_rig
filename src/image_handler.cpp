@@ -78,7 +78,7 @@
             return getImage(image);
         }
 
-        void SingleImageHandler::saveImage(const std::string &name, cv::Mat& image)
+        void SingleImageHandler::saveImage(const std::string &name, const cv::Mat& image)
         {
             /**
              * @brief Save cv::Mat images in disk
@@ -90,7 +90,7 @@
             cv::imwrite(name, image);
         }
 
-        void SingleImageHandler::saveImage(const std::string &name, IplImage* image)
+        void SingleImageHandler::saveImage(const std::string &name, const IplImage* image)
         {
             /**
              * @brief Save IplImage* image in disk
@@ -214,3 +214,18 @@
                 images.push_back(cvPtr->image);
             }
         }
+
+        void SyncImageHandler::saveImages(const std::string &common_name, const std::vector<cv::Mat > &images)
+        {
+            ROS_DEBUG_STREAM("Saving images in " << common_name);
+
+            int imgnum = 0;
+
+            BOOST_FOREACH(const cv::Mat &m, images)
+            {
+                std::string count = boost::str(boost::format( "%03d" )  % imgnum );
+                cv::imwrite(common_name+count, m);
+                ++imgnum;
+            }
+        }
+

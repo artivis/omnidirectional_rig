@@ -47,7 +47,7 @@ int main(int argc, char** argv){
     maskCamera_2  = AddPath("etc/images/cam2/Img_mask2.jpg",conf_path);
 
     SyncImageHandler syncImageHandler(topics_name[0],topics_name[1]);
-    PolyOmniCamera omniSys(path_yamls_cam,extrinParam);
+    OmniCameraRig omniSys(path_yamls_cam,extrinParam);
 
     omniSys.DispParam();
 

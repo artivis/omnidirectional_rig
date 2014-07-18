@@ -32,8 +32,8 @@ public:
     void getImage(cv::Mat&);
     void waitUntilImageReceived(cv::Mat&);
 
-    void saveImage(const std::string &name, cv::Mat& image);
-    void saveImage(const std::string &name, IplImage* image);
+    void saveImage(const std::string &name, const cv::Mat& image);
+    void saveImage(const std::string &name, const IplImage* image);
     void readImage(const std::string &file, cv::Mat& img);
 
 protected:
@@ -71,6 +71,8 @@ public:
 
     void getImages(std::vector<cv::Mat >&);
     void waitUntilImages(std::vector<cv::Mat >&);
+
+    void saveImages(const std::string &common_name, const std::vector<cv::Mat > &images);
 
 protected:
 

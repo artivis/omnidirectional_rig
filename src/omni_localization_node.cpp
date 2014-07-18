@@ -20,7 +20,7 @@ int main(int argc, char** argv){
     //ros::Publisher pub_CloudSph = nh.advertise<sensor_msgs::PointCloud>(cloudPtTopic,1);
 
 
-    PolyOmniCamera omniSys;
+    OmniCameraRig omniSys;
 
 
     std::string im_cam1;

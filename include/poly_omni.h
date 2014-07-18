@@ -11,18 +11,18 @@
 
 #include <stdio.h>
 
-class PolyOmniCamera {
+class OmniCameraRig {
 
     public :
 
         OmniCamera *camera_1;
         OmniCamera *camera_2;
 
-        PolyOmniCamera();
-        PolyOmniCamera(const std::vector<std::string> &paramPath);
-        PolyOmniCamera(const std::vector<std::string> &cameraParamPath, const std::string &extrinPath);
+        OmniCameraRig();
+        OmniCameraRig(const std::vector<std::string> &paramPath);
+        OmniCameraRig(const std::vector<std::string> &cameraParamPath, const std::string &extrinPath);
 
-        ~PolyOmniCamera();
+        ~OmniCameraRig();
 
         bool LoadCalibration(const std::string&);
 

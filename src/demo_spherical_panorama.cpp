@@ -25,7 +25,7 @@ int main(int argc, char** argv){
     nh.param("/spherical_vision/topic_right",topic,std::string("/right/image_raw"));
     topics_name.push_back(topic);
 
-    PolyOmniCamera omniSys;
+    OmniCameraRig omniSys;
 
     if (!omniSys.IsInit())
     {

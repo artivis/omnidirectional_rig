@@ -27,9 +27,6 @@ OmniCameraRig::OmniCameraRig(const std::vector<std::string> &cameraParamPath)
     this->camera_1.reset( new OmniCamera(cameraParamPath.at(0)) );
     this->camera_2.reset( new OmniCamera(cameraParamPath.at(1)) );
 
-//    this->camera_1 = new OmniCamera(cameraParamPath.at(0));
-//    this->camera_2 = new OmniCamera(cameraParamPath.at(1));
-
     cv::Mat extrin = cv::Mat::zeros(3,4,CV_32F);
     extrin(cv::Rect(0,0,3,3)) = GetRotationMat(0,180,0);
     extrin.at<float>(0,3) = 0.;
@@ -50,9 +47,6 @@ OmniCameraRig::OmniCameraRig(const std::vector<std::string> &cameraParamPath, co
     this->camera_1.reset( new OmniCamera(cameraParamPath.at(0)) );
     this->camera_2.reset( new OmniCamera(cameraParamPath.at(1)) );
 
-//    this->camera_1 = new OmniCamera(cameraParamPath.at(0));
-//    this->camera_2 = new OmniCamera(cameraParamPath.at(1));
-
     this->LoadCalibration(extrinPath);
 
     this->_panoSize = cv::Size(1200,400);
@@ -64,9 +58,6 @@ OmniCameraRig::OmniCameraRig(const std::vector<std::string> &cameraParamPath, co
 }
 
 OmniCameraRig::~OmniCameraRig(){
-
-//    delete this->camera_1;
-//    delete this->camera_2;
 
 }
 

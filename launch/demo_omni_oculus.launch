@@ -1,6 +1,6 @@
 <launch>
 
- <node name="demo_spherical_oculus" pkg="omni_localization" type="demo_spherical_oculus" args="4 $(find omni_localization)" output="screen"/>
+ <node name="demo_spherical_oculus" pkg="omni_localization" type="demo_spherical_oculus" args="1 $(find omni_localization)" output="screen"/>
 
  <node name="rviz" pkg="rviz" type="rviz" output="screen"/>
 

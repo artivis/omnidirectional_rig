@@ -7,9 +7,9 @@
 #include <string>
 
 // //needed by demo from image files
-#include <boost/range/combine.hpp>
-#include <boost/tuple/tuple.hpp>
-#include <boost/foreach.hpp>
+//#include <boost/range/combine.hpp>
+//#include <boost/tuple/tuple.hpp>
+//#include <boost/foreach.hpp>
 
 int main(int argc, char** argv){
 
@@ -30,15 +30,9 @@ int main(int argc, char** argv){
     std::string maskCamera_2;
     std::string extrinParam;
 
-    const std::string cloudPtTopic = "/cloud_sphere";
+    ros::Publisher pub_CloudSph = nh.advertise<sensor_msgs::PointCloud>("/cloud_sphere",1);
 
-    ros::Publisher pub_CloudSph = nh.advertise<sensor_msgs::PointCloud>(cloudPtTopic,1);
-
-    std::string topic;
-    nh.param("/spherical_vision/topic_left",topic,std::string("/left/image_raw"));
-    topics_name.push_back(topic);
-    nh.param("/spherical_vision/topic_right",topic,std::string("/right/image_raw"));
-    topics_name.push_back(topic);
+    nh.getParam("/spherical_vision/topics",topics_name);
 
     path_yamls_cam.push_back(AddPath("etc/calib/proto2/Pal_intrinsicParam_cam1.yaml",conf_path));
     path_yamls_cam.push_back(AddPath("etc/calib/proto2/Pal_intrinsicParam_cam2.yaml",conf_path));
@@ -48,7 +42,7 @@ int main(int argc, char** argv){
     maskCamera_1  = AddPath("etc/images/cam1/Img_mask1.jpg",conf_path);
     maskCamera_2  = AddPath("etc/images/cam2/Img_mask2.jpg",conf_path);
 
-    SyncImageHandler syncImageHandler("/left/image_raw","/right/image_raw");
+    SyncImageHandler syncImageHandler(topics_name[0],topics_name[1]);
     OmniCameraRig omniSys(path_yamls_cam,extrinParam);
 
     omniSys.DispParam();
@@ -63,72 +57,60 @@ int main(int argc, char** argv){
     sensor_msgs::PointCloud ptsCld;
 
 //    double time;
-//    char exit;
 
     omniSys.PartiallyFillMess(ptsCld);
-
-//    ROS_INFO("OLALALALALA");
 
     ros::AsyncSpinner aspin(1);
     aspin.start();
 
-//    cv::namedWindow("imageName", CV_WINDOW_AUTOSIZE );
-
-//    do
-//    {
-//        syncImageHandler.waitUntilImages(images);
-
-//        cv::imshow( "imageName", images[1] );
-
-//        omniSys.camera_1->setImage(images[0]);
-//        omniSys.camera_2->setImage(images[1]);
-
-////        time = (double)cv::getTickCount();
-
-//        omniSys.MessRGBSph(ptsCld);
-
-//        //std::cout << "time to comp sphere : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
-
-////        time = (double)cv::getTickCount();
-
-//        pub_CloudSph.publish(ptsCld);
-
-//        //std::cout << "time to publish sphere : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
-
-////        ros::spinOnce();
-
-////        images.clear();
-
-//        //TODO : exit on key pressing
-////        exit = cv::waitKey(10);
-////        if(exit == 27) break;
-//        cv::waitKey(1000);
-
-//    } while (ros::ok());
-
-
-    // Demo example : image from folder
-
-    std::set<std::string> imagesR = loadFilesName("/home/student/JeremieDeray/rosbag/runvideo/images/1/left/");
-    std::set<std::string> imagesL = loadFilesName("/home/student/JeremieDeray/rosbag/runvideo/images/1/right/");
-
-    std::string file1,file2;
-
-    BOOST_FOREACH(boost::tie(file1,file2), boost::combine(imagesR,imagesL))
+    do
     {
-        omniSys.camera_1->readImage(file1);
-        omniSys.camera_2->readImage(file2);
+        syncImageHandler.waitUntilImages(images);
+
+        omniSys.camera_1->setImage(images[0]);
+        omniSys.camera_2->setImage(images[1]);
+
+        //time = (double)cv::getTickCount();
 
         omniSys.MessRGBSph(ptsCld);
 
+        //std::cout << "time to comp sphere : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
+
+        //time = (double)cv::getTickCount();
+
         pub_CloudSph.publish(ptsCld);
 
-        ros::spinOnce();
+        //std::cout << "time to publish sphere : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
+
+        //TODO : exit on key pressing
 
         cv::waitKey(500);
 
-        //TODO : exit on key pressing
-        //exit = cv::waitKey(100);
-    }
-    return 0;
+    } while (ros::ok());
+
+
+      ////// Demo example : image from folder
+
+//    std::set<std::string> imagesR = loadFilesName("/home/student/JeremieDeray/rosbag/runvideo/images/1/left/");
+//    std::set<std::string> imagesL = loadFilesName("/home/student/JeremieDeray/rosbag/runvideo/images/1/right/");
+
+//    std::string file1,file2;
+
+//    BOOST_FOREACH(boost::tie(file1,file2), boost::combine(imagesR,imagesL))
+//    {
+//        omniSys.camera_1->readImage(file1);
+//        omniSys.camera_2->readImage(file2);
+
+//        omniSys.MessRGBSph(ptsCld);
+
+//        pub_CloudSph.publish(ptsCld);
+
+//        ros::spinOnce();
+
+//        cv::waitKey(500);
+
+//        //TODO : exit on key pressing
+//    }
+//    return 0;
+
 }

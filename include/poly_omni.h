@@ -18,9 +18,6 @@ public :
         boost::shared_ptr<OmniCamera> camera_1;
         boost::shared_ptr<OmniCamera> camera_2;
 
-//        OmniCamera *camera_1;
-//        OmniCamera *camera_2;
-
         OmniCameraRig();
         OmniCameraRig(const std::vector<std::string> &paramPath);
         OmniCameraRig(const std::vector<std::string> &cameraParamPath, const std::string &extrinPath);

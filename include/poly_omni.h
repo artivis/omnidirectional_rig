@@ -12,7 +12,9 @@
 #include <stdio.h>
 
 class OmniCameraRig : boost::noncopyable
-{
+{// Handle a omni-directional camera rig
+ // So far limited to 2 cameras.
+
 public :
 
         boost::shared_ptr<OmniCamera> camera_1;
@@ -22,60 +24,76 @@ public :
         OmniCameraRig(const std::vector<std::string> &paramPath);
         OmniCameraRig(const std::vector<std::string> &cameraParamPath, const std::string &extrinPath);
 
-        ~OmniCameraRig();
+        ~OmniCameraRig() {}
 
-        bool LoadCalibration(const std::string&);
+        //Load Rig Extrinsic Parameters
+        bool loadCalibration(const std::string&);
 
-        void DispParam();
+        void dispParam();
 
-        void MergeLUTWrap(bool heal = false);
+        void mergeLUTWrap(bool heal = false);
 
-        void MergeLUTHeal();
+        void mergeLUTHeal();
 
-        void MergeLUTSph();
+        void mergeLUTSph();
 
-        void RescaleWrapLUT(cv::Size size = cv::Size(1200,400));
+        void rescaleWrapLUT(cv::Size size = cv::Size(1200,400));
 
-        void StitchImage(bool INPAIN_FLAG = 0);
+        //Create Rig Panoramic Image from Cameras Image
+        void stitchImage(bool INPAIN_FLAG = 0);
 
-        void SaveImage(const std::string &filename = "panoramicImage.jpg");
+        void saveImage(const std::string &filename = "panoramicImage.jpg");
 
-        void ApplyBaseline();
+        //Apply Extrinsic Parameters to 2nd Camera Spherical Points
+        void applyBaseline();
 
-        void MessRGBSph(sensor_msgs::PointCloud &);
+        //Fill Message with Colors from Spherical Rig Image
+        void messRGBSph(sensor_msgs::PointCloud &);
 
-        void PartiallyFillMess(sensor_msgs::PointCloud &);
+        //Pre-compute 3D Points according to Spherical Rig Image
+        void partiallyFillMess(sensor_msgs::PointCloud &);
 
         void setImages(const std::vector<cv::Mat>&);
 
-        bool IsInit() {return this->_init;}
+        bool isInit() {return this->_init;}
 
-        cv::Mat GetExtrin();
-        cv::Mat GetPano();
-        cv::Mat GetLUT();
+        cv::Mat getExtrin();
+        cv::Mat getPano();
+        cv::Mat getLUT();
 
-        void SetExtrin(const cv::Mat &);
-        void SetPanoSize(cv::Size &);
-        void SetPanoSize(int,int);
+        void setExtrin(const cv::Mat &);
+        void setPanoSize(cv::Size &);
+        void setPanoSize(int,int);
 
-        void DownSample(int sampling_ratio = 1);
+        //Down Sample Cameras ~> K/samp_ratio
+        //Images will be Down Sampled too
+        void downSample(int sampling_ratio = 1);
 
-        void Sph2Pano();
+        //
+        void sph2Pano();
 
-        void Sph2HealPano();
-
-        void SampSphFct(cv::Mat&, int bandwidth = 64);
+        void sph2HealPano();
 
 private :
 
-        void Rotate90roll();
+        //Since Camera Rig was Mounted on Robot with
+        //a Rotation of -90roll this Compensate
+        //to Retrieve Image in Correct Direction.
+        //Todo - make function more generic and
+        //retrieve Camera Rig Pose from a Proper tf.
+        void rotate90roll();
 
         cv::Mat _extrin;
         cv::Size _panoSize;
         cv::Mat _pano;
+
+        //Projection of Camera Rig Pixels
+        //onto Unit Sphere
         cv::Mat _LUTsphere;
+
+        //Projection of Camera Rig Spherical Pixels
+        //onto Image Plan - Panoramic Image
         cv::Mat _LUT_wrap_im;
-        cv::Mat _LUTsph_im;
 
         bool _init;
         bool _isSampled;

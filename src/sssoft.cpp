@@ -9,9 +9,6 @@
 
 #include <boost/foreach.hpp>
 
-//#include <soft20/soft_fftw.h>
-//#include <soft20/s2_legendreTransforms.h>
-
 #include <soft20/makeweights.h>
 #include <soft20/s2_primitive.h>
 #include <soft20/s2_cospmls.h>
@@ -27,16 +24,11 @@
 #define NORM( x ) ( (x[0])*(x[0]) + (x[1])*(x[1]) )
 
 
-void SOFTWRAPP::WrapSphCorr2(int bw, const cv::Mat &sphPattern, const cv::Mat &sphSignal, cv::Vec3f &EulerAngle)
+void SOFTWRAPP::wrapSphCorr2(int bw, const cv::Mat &sphPattern, const cv::Mat &sphSignal, cv::Vec3f &EulerAngle)
 {
     int i, j, k, n;
     double *signal, *pattern ;
     double alpha, beta, gamma ;
-
-//    cv::Mat Ssignal, Spattern;
-
-//    sphPattern.convertTo(Spattern,CV_64F);
-//    sphSignal.convertTo(Ssignal,CV_64F);
 
     n = 2 * bw ;
 
@@ -99,7 +91,7 @@ void SOFTWRAPP::WrapSphCorr2(int bw, const cv::Mat &sphPattern, const cv::Mat &s
 }
 
 
-void SOFTWRAPP::WarpS2Rotate(int bw, cv::Vec3f eulerang, const harmCoeff& harmcoeff, harmCoeff& rotharmcoeff)
+void SOFTWRAPP::warpS2Rotate(int bw, cv::Vec3f eulerang, const harmCoeff& harmcoeff, harmCoeff& rotharmcoeff)
 {
     double alpha = eulerang[0];
     double beta = eulerang[1];
@@ -168,11 +160,9 @@ void SOFTWRAPP::WarpS2Rotate(int bw, cv::Vec3f eulerang, const harmCoeff& harmco
         }
     }
 
-
     rotateFctFFTWS_mem( bw, degOut,
                         sigR, sigI,
                         alpha, beta, gamma ) ;
-
 
     for(l = 0 ; l < bw ; l++ )
     {
@@ -189,7 +179,6 @@ void SOFTWRAPP::WarpS2Rotate(int bw, cv::Vec3f eulerang, const harmCoeff& harmco
         tmp_ord.clear();
     }
 
-
     free(trans_seminaive_naive_table);
     free(seminaive_naive_table);
 
@@ -202,7 +191,7 @@ void SOFTWRAPP::WarpS2Rotate(int bw, cv::Vec3f eulerang, const harmCoeff& harmco
 }
 
 
-void SOFTWRAPP::DispSphHarm(const harmCoeff &sphHarm)
+void SOFTWRAPP::dispSphHarm(const harmCoeff &sphHarm)
 {
     std::vector< std::complex<double> >::const_iterator _it_begin, _it_end;
 
@@ -224,23 +213,21 @@ void SOFTWRAPP::DispSphHarm(const harmCoeff &sphHarm)
             m++;
         }
     }
-
     std::cout<<std::endl;
 }
 
 
-void SOFTWRAPP::DispRotEst(const cv::Vec3f &rotation)
+void SOFTWRAPP::dispRotEst(const cv::Vec3f &rotation)
 {
     std::cout<<"\n %Rotation\n %alpha = "<<rotation[0]<<
              ";\n %beta  = "<<rotation[1]<<
              ";\n %gamma = "<<rotation[2]<<";"<<std::endl<<std::endl;
 
     std::cout<<"\n sumZ = [sumZ;"<<rotation[0]+rotation[2]<<"];"<<std::endl<<std::endl;
-
 }
 
 
-void SOFTWRAPP::HarmDesc(const harmCoeff &coeff, std::vector< std::complex<double> > &descriptor)
+void SOFTWRAPP::harmDesc(const harmCoeff &coeff, std::vector< std::complex<double> > &descriptor)
 {
     std::vector< std::complex<double> >::const_iterator _it_begin, _it_end;
 
@@ -275,7 +262,7 @@ void SOFTWRAPP::HarmDesc(const harmCoeff &coeff, std::vector< std::complex<doubl
     }
 }
 
-void SOFTWRAPP::HarmDesc(const harmCoeff &coeff, std::vector< double > &descriptor)
+void SOFTWRAPP::harmDesc(const harmCoeff &coeff, std::vector< double > &descriptor)
 {
     std::vector< std::complex<double> >::const_iterator _it_begin, _it_end;
 
@@ -314,7 +301,7 @@ void SOFTWRAPP::HarmDesc(const harmCoeff &coeff, std::vector< double > &descript
 }
 
 
-void SOFTWRAPP::WrapSphHarm(int bw, const cv::Mat &signal, harmCoeff &coeff)
+void SOFTWRAPP::wrapSphHarm(int bw, const cv::Mat &signal, harmCoeff &coeff)
 {
     int i, j, l, m, n, dummy;
 
@@ -326,7 +313,6 @@ void SOFTWRAPP::WrapSphHarm(int bw, const cv::Mat &signal, harmCoeff &coeff)
     double *weights ;
     double *seminaive_naive_tablespace ;
     double **seminaive_naive_table ;
-//    double *workspace2  ;
 
     fftw_complex *workspace2;
     fftw_plan dctPlan, fftPlan ;
@@ -341,8 +327,6 @@ void SOFTWRAPP::WrapSphHarm(int bw, const cv::Mat &signal, harmCoeff &coeff)
 
     workspace2 =  (fftw_complex *)fftw_malloc( sizeof(fftw_complex) * ((14*bw*bw) + (48 * bw)));
 
-//    workspace2 = new double[(14*bw*bw) + (48 * bw)];
-
     workspace3 = new double[(12*n) + (n*bw)];
 
     tmpR = new double[n*n];
@@ -353,7 +337,6 @@ void SOFTWRAPP::WrapSphHarm(int bw, const cv::Mat &signal, harmCoeff &coeff)
 
     seminaive_naive_tablespace = new double[Reduced_Naive_TableSize(bw,bw) +
                                             Reduced_SpharmonicTableSize(bw,bw)];
-
 
     /****
         At this point, check to see if all the memory has been
@@ -370,8 +353,6 @@ void SOFTWRAPP::WrapSphHarm(int bw, const cv::Mat &signal, harmCoeff &coeff)
 
         fftw_free( workspace2 );
 
-//        delete[] workspace2;
-
         delete[] seminaive_naive_tablespace;
 
         delete[] workspace3;
@@ -385,7 +366,6 @@ void SOFTWRAPP::WrapSphHarm(int bw, const cv::Mat &signal, harmCoeff &coeff)
         return;
     }
 
-
     /* Make the weights */
     makeweights( bw, weights ) ;
 
@@ -393,7 +373,6 @@ void SOFTWRAPP::WrapSphHarm(int bw, const cv::Mat &signal, harmCoeff &coeff)
     /* first for the dct */
     dctPlan = fftw_plan_r2r_1d( 2*bw, weights, workspace3,
                       FFTW_REDFT10, FFTW_ESTIMATE ) ;
-
 
     rank = 1 ;
     dims[0].n = 2*bw ;
@@ -411,13 +390,10 @@ void SOFTWRAPP::WrapSphHarm(int bw, const cv::Mat &signal, harmCoeff &coeff)
                           (double *)workspace2 + (n*n),
                           FFTW_ESTIMATE );
 
-
-
     /* Precompute Legendres */
     seminaive_naive_table = SemiNaive_Naive_Pml_Table(bw, bw,
                                 seminaive_naive_tablespace,
                                 (double *)workspace2);
-
 
     assert((signal.rows*signal.cols) == (n*n));
     int tt = 0;
@@ -433,7 +409,6 @@ void SOFTWRAPP::WrapSphHarm(int bw, const cv::Mat &signal, harmCoeff &coeff)
         }
     }
 
-
     /* spherical transform of SIGNAL */
     FST_semi_memo( tmpR, tmpI,
                    sigCoefR, sigCoefI,
@@ -441,7 +416,6 @@ void SOFTWRAPP::WrapSphHarm(int bw, const cv::Mat &signal, harmCoeff &coeff)
                    (double *)workspace2, isReal, bw,
                    &dctPlan, &fftPlan,
                    weights );
-
 
     for(l = 0 ; l < bw ; l++ )
     {
@@ -456,7 +430,6 @@ void SOFTWRAPP::WrapSphHarm(int bw, const cv::Mat &signal, harmCoeff &coeff)
         tmp_ord.clear();
     }
 
-
     free( seminaive_naive_table ) ;
 
     fftw_free( workspace2 );
@@ -464,7 +437,6 @@ void SOFTWRAPP::WrapSphHarm(int bw, const cv::Mat &signal, harmCoeff &coeff)
     fftw_destroy_plan( fftPlan );
     fftw_destroy_plan( dctPlan );
 
-//    delete[] workspace2;
     delete[] workspace3;
 
     delete[] seminaive_naive_tablespace;
@@ -477,8 +449,7 @@ void SOFTWRAPP::WrapSphHarm(int bw, const cv::Mat &signal, harmCoeff &coeff)
     delete[] tmpR;
 }
 
-
-void SOFTWRAPP::SampSphFct(int bw,const cv::Mat &pano, cv::Mat &sampFct)
+void SOFTWRAPP::sampSphFct(int bw,const cv::Mat &pano, cv::Mat &sampFct)
 {
     cv::Mat tmp;
     double min, max;
@@ -491,6 +462,8 @@ void SOFTWRAPP::SampSphFct(int bw,const cv::Mat &pano, cv::Mat &sampFct)
 
     tmp.convertTo(tmp ,CV_64F);
 
+    cv::resize(tmp,tmp,gridSize);
+
     cv::minMaxLoc(tmp,&min,&max);
 
     tmp -= min;
@@ -498,13 +471,11 @@ void SOFTWRAPP::SampSphFct(int bw,const cv::Mat &pano, cv::Mat &sampFct)
 
     tmp /= cv::norm(tmp);
 
-    cv::resize(tmp,tmp,gridSize);
-
     tmp.convertTo(sampFct,CV_64F);
 }
 
 
-void SOFTWRAPP::SaveSphHarm(const std::string &filename, const harmCoeff &harmcoeff)
+void SOFTWRAPP::saveSphHarm(const std::string &filename, const harmCoeff &harmcoeff)
 {
 //    std::ofstream os;
 //    os.open((char*)filename.c_str());

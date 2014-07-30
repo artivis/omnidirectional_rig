@@ -23,13 +23,13 @@ int main(int argc, char** argv)
 //    {
         OmniCameraRig omniSys;
 
-        if (!omniSys.IsInit())
+        if (!omniSys.isInit())
         {
             std::cout << "Omni System Not Init !"<<std::endl;
             return 2;
         }
 
-        omniSys.SetPanoSize(400,400);
+        omniSys.setPanoSize(400,400);
 
         cv::Mat sampSphFunc;
         int bwIn = 32;
@@ -56,15 +56,15 @@ int main(int argc, char** argv)
             omniSys.camera_1->readImage(list1[i]);
             omniSys.camera_2->readImage(list2[i]);
 
-            omniSys.MergeLUTWrap();
+            omniSys.mergeLUTWrap();
 
-            omniSys.StitchImage();
+            omniSys.stitchImage();
 
-            SOFTWRAPP::SampSphFct(bwIn,omniSys.GetPano(),sampSphFunc);
+            SOFTWRAPP::sampSphFct(bwIn,omniSys.getPano(),sampSphFunc);
 
-            SOFTWRAPP::WrapSphHarm(bwIn,sampSphFunc,harmcoeff);
+            SOFTWRAPP::wrapSphHarm(bwIn,sampSphFunc,harmcoeff);
 
-            SOFTWRAPP::DispSphHarm(harmcoeff);
+            SOFTWRAPP::dispSphHarm(harmcoeff);
 
 //            SOFTWRAPP::WarpS2Rotate(bwIn,)
 

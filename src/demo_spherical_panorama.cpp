@@ -23,7 +23,7 @@ int main(int argc, char** argv){
 
     OmniCameraRig omniSys;
 
-    if (!omniSys.IsInit())
+    if (!omniSys.isInit())
     {
         ROS_ERROR( "Omni System Not Init !" );
         return 2;
@@ -36,11 +36,11 @@ int main(int argc, char** argv){
 
     cv_img.encoding = "bgr8";
 
-    omniSys.DispParam();
+    omniSys.dispParam();
 
-    omniSys.SetPanoSize(400,1000);
+    omniSys.setPanoSize(400,1000);
 
-    omniSys.MergeLUTWrap();
+    omniSys.mergeLUTWrap();
 
     SyncImageHandler syncImageHandler(topics_name[0],topics_name[1]);
 
@@ -60,7 +60,7 @@ int main(int argc, char** argv){
 //    cv::destroyWindow("pano");
 //    return 0;
 
-    std::vector< cv::Mat > images;
+    std::vector<cv::Mat> images;
 
     do
     {
@@ -69,9 +69,9 @@ int main(int argc, char** argv){
         omniSys.camera_1->setImage(images[0]);
         omniSys.camera_2->setImage(images[1]);
 
-        omniSys.StitchImage();
+        omniSys.stitchImage();
 
-        cv_img.image = omniSys.GetPano();
+        cv_img.image = omniSys.getPano();
 
         cv_img.toImageMsg(img_msg);
 

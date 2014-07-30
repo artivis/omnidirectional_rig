@@ -45,20 +45,20 @@ int main(int argc, char** argv){
     SyncImageHandler syncImageHandler(topics_name[0],topics_name[1]);
     OmniCameraRig omniSys(path_yamls_cam,extrinParam);
 
-    omniSys.DispParam();
+    omniSys.dispParam();
 
     omniSys.camera_1->LoadMask(maskCamera_1);
     omniSys.camera_2->LoadMask(maskCamera_2);
 
-    omniSys.DownSample(sampling_ratio);
+    omniSys.downSample(sampling_ratio);
 
-    omniSys.DispParam();
+    omniSys.dispParam();
 
     sensor_msgs::PointCloud ptsCld;
 
 //    double time;
 
-    omniSys.PartiallyFillMess(ptsCld);
+    omniSys.partiallyFillMess(ptsCld);
 
     ros::AsyncSpinner aspin(1);
     aspin.start();
@@ -72,7 +72,7 @@ int main(int argc, char** argv){
 
         //time = (double)cv::getTickCount();
 
-        omniSys.MessRGBSph(ptsCld);
+        omniSys.messRGBSph(ptsCld);
 
         //std::cout << "time to comp sphere : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
 
@@ -101,7 +101,7 @@ int main(int argc, char** argv){
 //        omniSys.camera_1->readImage(file1);
 //        omniSys.camera_2->readImage(file2);
 
-//        omniSys.MessRGBSph(ptsCld);
+//        omniSys.messRGBSph(ptsCld);
 
 //        pub_CloudSph.publish(ptsCld);
 

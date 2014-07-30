@@ -35,7 +35,7 @@ int main(int argc, char** argv){
 //    pal::slam::FeatureExtractor featureExtractor;
 
 
-    omniSys.DispParam();
+    omniSys.dispParam();
 
 
 

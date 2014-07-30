@@ -27,13 +27,13 @@ int main(int argc, char** argv){
 
     OmniCameraRig omniSys;
 
-    if (!omniSys.IsInit())
+    if (!omniSys.isInit())
     {
         std::cout << "Omni System Not Init !"<<std::endl;
         return 2;
     }
 
-    omniSys.DispParam();
+    omniSys.dispParam();
 
 //    omniSys.camera_1->readImage(im_cam1);
 //    omniSys.camera_2->readImage(im_cam2);
@@ -104,7 +104,7 @@ int main(int argc, char** argv){
 
      image_names.erase(it);
 
-     SOFTWRAPP::SampSphFct(bwIn,myimage,sampSphFunc1);
+     SOFTWRAPP::sampSphFct(bwIn,myimage,sampSphFunc1);
 
      sampSphFunc1.copyTo(img_ref);
 
@@ -112,15 +112,15 @@ int main(int argc, char** argv){
      {
         myimage = cv::imread(img);
 
-        SOFTWRAPP::SampSphFct(bwIn,myimage,sampSphFunc2);
+        SOFTWRAPP::sampSphFct(bwIn,myimage,sampSphFunc2);
 
         time = (double)cv::getTickCount();
 
-        SOFTWRAPP::WrapSphCorr2(bwIn,sampSphFunc1,sampSphFunc2,rotation);
+        SOFTWRAPP::wrapSphCorr2(bwIn,sampSphFunc1,sampSphFunc2,rotation);
 
         std::cout << "%time to estimate : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
 
-        SOFTWRAPP::DispRotEst(rotation);
+        SOFTWRAPP::dispRotEst(rotation);
 
 //        tmp_ang = rotation[0] + rotation[2];
 

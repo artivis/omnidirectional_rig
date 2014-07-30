@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(omni_localization)
+project(omnidirectional_rig)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -105,17 +105,6 @@ include_directories(${catkin_INCLUDE_DIRS} include)
 # )
 
 ## Declare a cpp executable
-add_executable(omni_localization_node
-                           src/image_handler.cpp
-                           src/omni_localization_node.cpp
-                           src/poly_omni.cpp
-                           src/omni_camera.cpp
-                           src/usefull.cpp
-
-)
-target_link_libraries(omni_localization_node
-   ${catkin_LIBRARIES}
-)
 
 add_executable(demo_spherical_oculus
                            src/image_handler.cpp

@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>omni_localization</name>
+  <name>omnidirectional_rig</name>
   <version>0.0.0</version>
   <description>The omni_localization package</description>
 
@@ -41,7 +41,6 @@
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
 
-  <build_depend>vocabulary_tree</build_depend>
   <build_depend>soft20</build_depend>
 
   <run_depend>soft20</run_depend>

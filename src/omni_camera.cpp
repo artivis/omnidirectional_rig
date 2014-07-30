@@ -1,4 +1,4 @@
-#include "omni_camera.h"
+#include "omnidirectional_rig/omni_camera.h"
 
 
 OmniCamera::OmniCamera(const std::string &paramPath)

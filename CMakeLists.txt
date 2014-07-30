@@ -9,11 +9,9 @@ find_package(catkin REQUIRED COMPONENTS
     std_msgs
     cv_bridge
     image_transport
-    soft20
 )
 
 find_package( OpenCV REQUIRED )
-find_package(Eigen)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -84,9 +82,9 @@ find_package(Eigen)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES omni_localization
-#  CATKIN_DEPENDS other_catkin_pkg
+ INCLUDE_DIRS include
+ LIBRARIES ${PROJECT_NAME}
+  CATKIN_DEPENDS roscpp cv_bridge image_transport
 #  DEPENDS system_lib
 )
 
@@ -97,7 +95,9 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 # include_directories(include)
-include_directories(${catkin_INCLUDE_DIRS} include)
+include_directories(
+   ${catkin_INCLUDE_DIRS} include
+)
 
 ## Declare a cpp library
 # add_library(omni_localization
@@ -106,52 +106,22 @@ include_directories(${catkin_INCLUDE_DIRS} include)
 
 ## Declare a cpp executable
 
-add_executable(demo_spherical_oculus
+add_library(${PROJECT_NAME}
                            src/image_handler.cpp
-                           src/demo_spherical_oculus.cpp
                            src/poly_omni.cpp
                            src/omni_camera.cpp
                            src/usefull.cpp
-
 )
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+
+add_executable(demo_spherical_oculus src/demo_spherical_oculus.cpp)
 target_link_libraries(demo_spherical_oculus
-   ${catkin_LIBRARIES}
+   ${catkin_LIBRARIES} ${PROJECT_NAME}
 )
 
-add_executable(demo_spherical_panorama
-                           src/image_handler.cpp
-                           src/demo_spherical_panorama.cpp
-                           src/poly_omni.cpp
-                           src/omni_camera.cpp
-                           src/usefull.cpp
-
-)
+add_executable(demo_spherical_panorama src/demo_spherical_panorama.cpp)
 target_link_libraries(demo_spherical_panorama
-   ${catkin_LIBRARIES}
-)
-
-add_executable(track_camera_orientation
-                           src/image_handler.cpp
-                           src/track_camera_orientation.cpp
-                           src/poly_omni.cpp
-                           src/omni_camera.cpp
-                           src/usefull.cpp
-                           src/sssoft.cpp
-)
-target_link_libraries(track_camera_orientation
-   ${catkin_LIBRARIES} fftw3
-)
-
-add_executable(TEST_export_sphHarm_database
-                           src/image_handler.cpp
-                           src/sph_harm_db.cpp
-                           src/poly_omni.cpp
-                           src/omni_camera.cpp
-                           src/usefull.cpp
-                           src/sssoft.cpp
-)
-target_link_libraries(TEST_export_sphHarm_database
-   ${catkin_LIBRARIES} fftw3
+   ${catkin_LIBRARIES} ${PROJECT_NAME}
 )
 
 ## Add cmake target dependencies of the executable/library

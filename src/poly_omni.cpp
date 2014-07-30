@@ -1,4 +1,4 @@
-#include <poly_omni.h>
+#include "omnidirectional_rig/poly_omni.h"
 
 OmniCameraRig::OmniCameraRig()
 {

@@ -1,6 +1,6 @@
-#include <ros/ros.h>
+#include "omnidirectional_rig/image_handler.h"
 
-#include "image_handler.h"
+#include <ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
 #include <boost/foreach.hpp>
 

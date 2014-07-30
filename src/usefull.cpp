@@ -1,4 +1,4 @@
-#include "usefull.h"
+#include "omnidirectional_rig/usefull.h"
 
 #include <algorithm>
 #include <boost/algorithm/string/predicate.hpp>

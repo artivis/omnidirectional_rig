@@ -1,5 +1,5 @@
-#include "image_handler.h"
-#include "poly_omni.h"
+#include "omnidirectional_rig/image_handler.h"
+#include "omnidirectional_rig/poly_omni.h"
 
 #include <opencv2/core/core.hpp>
 

@@ -1,7 +1,12 @@
 #include "omnidirectional_rig/image_handler.h"
 #include "omnidirectional_rig/poly_omni.h"
 
+#include "omnidirectional_rig/pcl_view.h"
+
 #include <opencv2/core/core.hpp>
+
+#include <pcl/conversions.h>
+#include <pcl_conversions/pcl_conversions.h>
 
 #include <iostream>
 #include <string>
@@ -30,7 +35,9 @@ int main(int argc, char** argv){
     std::string maskCamera_2;
     std::string extrinParam;
 
-    ros::Publisher pub_CloudSph = nh.advertise<sensor_msgs::PointCloud>("/cloud_sphere",1);
+    sensor_msgs::PointCloud2 ptsCld;
+
+    ros::Publisher pub_CloudSph = nh.advertise<sensor_msgs::PointCloud2>("/cloud_sphere",1);
 
     nh.getParam("/spherical_vision/topics",topics_name);
 
@@ -42,6 +49,7 @@ int main(int argc, char** argv){
     maskCamera_1  = AddPath("etc/images/cam1/Img_mask1.jpg",conf_path);
     maskCamera_2  = AddPath("etc/images/cam2/Img_mask2.jpg",conf_path);
 
+    boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
     SyncImageHandler syncImageHandler(topics_name[0],topics_name[1]);
     OmniCameraRig omniSys(path_yamls_cam,extrinParam);
 
@@ -54,11 +62,14 @@ int main(int argc, char** argv){
 
     omniSys.dispParam();
 
-    sensor_msgs::PointCloud ptsCld;
+    //Declaration and instantiation of a cloud pointer to be used for output
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_pcl(new pcl::PointCloud<pcl::PointXYZRGB>);
 
 //    double time;
 
     omniSys.partiallyFillMess(ptsCld);
+
+    viewer = viewportsVis(cloud_pcl);
 
     ros::AsyncSpinner aspin(1);
     aspin.start();
@@ -74,17 +85,23 @@ int main(int argc, char** argv){
 
         omniSys.messRGBSph(ptsCld);
 
+        pcl::fromROSMsg(ptsCld, *cloud_pcl);
+
         //std::cout << "time to comp sphere : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
 
         //time = (double)cv::getTickCount();
 
-        pub_CloudSph.publish(ptsCld);
+//        pub_CloudSph.publish(ptsCld);
+
+        if(!viewer->wasStopped())
+        {
+            viewer->updatePointCloud(cloud_pcl,"right");
+            viewer->updatePointCloud(cloud_pcl,"left");
+            viewer->spinOnce(100);
+            boost::this_thread::sleep (boost::posix_time::microseconds (100000));
+        }
 
         //std::cout << "time to publish sphere : "<<((double)cv::getTickCount() - time) / cv::getTickFrequency()<<std::endl<<std::endl;
-
-        //TODO : exit on key pressing
-
-        cv::waitKey(500);
 
     } while (ros::ok());
 

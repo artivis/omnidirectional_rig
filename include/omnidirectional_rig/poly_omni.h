@@ -2,13 +2,14 @@
 #define POLY_OMNI_H
 
 #include "omnidirectional_rig/omni_camera.h"
+#include "point_cloud2_iterator.h"
 
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/photo/photo.hpp>
 
-#include <sensor_msgs/PointCloud.h>
-#include <boost/utility.hpp>
+#include <sensor_msgs/PointCloud2.h>
 
+#include <boost/utility.hpp>
 #include <stdio.h>
 
 class OmniCameraRig : boost::noncopyable
@@ -48,10 +49,10 @@ public :
         void applyBaseline();
 
         //Fill Message with Colors from Spherical Rig Image
-        void messRGBSph(sensor_msgs::PointCloud &);
+        void messRGBSph(sensor_msgs::PointCloud2 &);
 
         //Pre-compute 3D Points according to Spherical Rig Image
-        void partiallyFillMess(sensor_msgs::PointCloud &);
+        void partiallyFillMess(sensor_msgs::PointCloud2 &);
 
         void setImages(const std::vector<cv::Mat>&);
 

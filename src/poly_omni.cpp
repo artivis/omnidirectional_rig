@@ -277,10 +277,10 @@ void OmniCameraRig::rotate90roll()
     Rot90roll.convertTo(Rot90roll,this->_LUTsphere.type());
 
     cv::Mat tmp = Rot90roll * this->_LUTsphere;
-    tmp.convertTo(this->_LUTsphere,CV_32F); // in theorz could be removed
+    tmp.convertTo(this->_LUTsphere,CV_32F); // in theory could be removed
 }
 
-void OmniCameraRig::partiallyFillMess(sensor_msgs::PointCloud &PointCloud){
+void OmniCameraRig::partiallyFillMess(sensor_msgs::PointCloud2 &PointCloud){
 
     if (!this->isInit()) return;
 
@@ -304,19 +304,16 @@ void OmniCameraRig::partiallyFillMess(sensor_msgs::PointCloud &PointCloud){
         this->rotate90roll();
     }
 
-    PointCloud.header.frame_id = "base_link";
+    PointCloud.header.frame_id = "map";
+    PointCloud.height = 1;
+    PointCloud.width = this->_LUTsphere.cols;
 
-    PointCloud.points.resize(this->_LUTsphere.cols);
+    sensor_msgs::PointCloud2Modifier modifier(PointCloud);
+    modifier.setPointCloud2FieldsByString(2, "xyz", "rgb");
 
-    PointCloud.channels.resize(3);
-
-    PointCloud.channels[0].name = "r";
-    PointCloud.channels[1].name = "g";
-    PointCloud.channels[2].name = "b";
-
-    PointCloud.channels[0].values.resize(this->_LUTsphere.cols);
-    PointCloud.channels[1].values.resize(this->_LUTsphere.cols);
-    PointCloud.channels[2].values.resize(this->_LUTsphere.cols);
+    sensor_msgs::PointCloud2Iterator<float> iter_x(PointCloud, "x");
+    sensor_msgs::PointCloud2Iterator<float> iter_y(PointCloud, "y");
+    sensor_msgs::PointCloud2Iterator<float> iter_z(PointCloud, "z");
 
     int row_ind = 0;
     int col_ind = 0;
@@ -328,13 +325,13 @@ void OmniCameraRig::partiallyFillMess(sensor_msgs::PointCloud &PointCloud){
     const uchar *ptr_mask;
     ptr_mask = mask.ptr<uchar>(row_ind) + col_ind;
 
-    for (int i = 0; i<this->_LUTsphere.cols; i++)
+    for (int i = 0; i<this->_LUTsphere.cols; ++i, ++iter_x, ++iter_y, ++iter_z)
     {
         if (*ptr_mask > 0)
         {
-            PointCloud.points[i].x = this->_LUTsphere.at<float>(0,i) ;
-            PointCloud.points[i].y = this->_LUTsphere.at<float>(1,i) ;
-            PointCloud.points[i].z = this->_LUTsphere.at<float>(2,i) ;
+            *iter_x = this->_LUTsphere.at<float>(0,i);
+            *iter_y = this->_LUTsphere.at<float>(1,i);
+            *iter_z = this->_LUTsphere.at<float>(2,i);
         }
 
         row_ind++;
@@ -356,7 +353,7 @@ void OmniCameraRig::partiallyFillMess(sensor_msgs::PointCloud &PointCloud){
     }
 }
 
-void OmniCameraRig::messRGBSph(sensor_msgs::PointCloud &PointCloud)
+void OmniCameraRig::messRGBSph(sensor_msgs::PointCloud2 &PointCloud)
 {
     if (!this->isInit()) return;
 
@@ -371,22 +368,26 @@ void OmniCameraRig::messRGBSph(sensor_msgs::PointCloud &PointCloud)
 
     cv::Mat im_val;
 
-    this->camera_1->_Frame.convertTo(im_val,CV_32FC3);
+    this->camera_1->_Frame.convertTo(im_val,CV_8UC3);
     cv::Mat mask = this->camera_1->_Mask;
 
-    const cv::Vec3f *ptr_pix;
-    ptr_pix = im_val.ptr<cv::Vec3f>(row_ind) + col_ind;
+    const cv::Vec3b *ptr_pix;
+    ptr_pix = im_val.ptr<cv::Vec3b>(row_ind) + col_ind;
 
     const uchar *ptr_mask;
     ptr_mask = mask.ptr<uchar>(row_ind) + col_ind;
 
-    for (int i = 0; i<(this->_LUTsphere.cols); i++)
+    sensor_msgs::PointCloud2Iterator<uint8_t> iter_r(PointCloud, "r");
+    sensor_msgs::PointCloud2Iterator<uint8_t> iter_g(PointCloud, "g");
+    sensor_msgs::PointCloud2Iterator<uint8_t> iter_b(PointCloud, "b");
+
+    for (int i = 0; i<(this->_LUTsphere.cols); ++i, ++iter_r, ++iter_g, ++iter_b)
     {
         if (*ptr_mask > 0)
         {
-            PointCloud.channels[0].values[i] = ((*ptr_pix)[2])/255.0; //r
-            PointCloud.channels[1].values[i] = ((*ptr_pix)[1])/255.0; //g
-            PointCloud.channels[2].values[i] = ((*ptr_pix)[0])/255.0; //b
+            *iter_r = (*ptr_pix)[2]; //r
+            *iter_g = (*ptr_pix)[1]; //g
+            *iter_b = (*ptr_pix)[0]; //b
         }
 
         row_ind++;
@@ -399,13 +400,13 @@ void OmniCameraRig::messRGBSph(sensor_msgs::PointCloud &PointCloud)
 
         if (i == (pix_im1-1))
         {
-            this->camera_2->_Frame.convertTo(im_val,CV_32FC3);
+            this->camera_2->_Frame.convertTo(im_val,CV_8UC3);
             mask = this->camera_2->_Mask;
             row_ind = 0;
             col_ind = 0;
         }
 
-        ptr_pix = im_val.ptr<cv::Vec3f>(row_ind) + col_ind;
+        ptr_pix = im_val.ptr<cv::Vec3b>(row_ind) + col_ind;
         ptr_mask = mask.ptr<uchar>(row_ind) + col_ind;
     }
 }

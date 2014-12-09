@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 find_package( OpenCV REQUIRED )
+find_package( PCL 1.2 REQUIRED )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -84,7 +85,7 @@ find_package( OpenCV REQUIRED )
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS roscpp cv_bridge image_transport
+ CATKIN_DEPENDS roscpp cv_bridge image_transport
 #  DEPENDS system_lib
 )
 
@@ -96,8 +97,11 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
-   ${catkin_INCLUDE_DIRS} include
+   ${catkin_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS} include
 )
+
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 
 ## Declare a cpp library
 # add_library(omni_localization
@@ -111,12 +115,13 @@ add_library(${PROJECT_NAME}
                            src/poly_omni.cpp
                            src/omni_camera.cpp
                            src/usefull.cpp
+                           include/omnidirectional_rig/impl/point_cloud2_iterator.h
 )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 add_executable(demo_spherical_oculus src/demo_spherical_oculus.cpp)
 target_link_libraries(demo_spherical_oculus
-   ${catkin_LIBRARIES} ${PROJECT_NAME}
+   ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${PROJECT_NAME}
 )
 
 add_executable(demo_spherical_panorama src/demo_spherical_panorama.cpp)

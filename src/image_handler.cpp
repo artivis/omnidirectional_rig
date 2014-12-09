@@ -12,7 +12,7 @@
             ROS_DEBUG("Building image handler");
 
             std::string transHint;
-            _nh.param("_transport_img",transHint,std::string("compressed"));
+            _nh.param("_transport_img",transHint,std::string("raw"));
 
             image_transport::TransportHints transportHint(transHint);
 
@@ -144,12 +144,12 @@
             _imageTransport.reset( new image_transport::ImageTransport( _nh));
 
             std::string transHint;
-            _nh.param("/Sync_Image/Transport_Hints",transHint,std::string("compressed"));
+            _nh.param("/Sync_Image/Transport_Hints",transHint,std::string("raw"));
 
             image_transport::TransportHints transportHint(transHint);
 
-            _imgSub1.reset(new image_transport::SubscriberFilter(*_imageTransport, topic1, 1, transportHint) );
-            _imgSub2.reset(new image_transport::SubscriberFilter(*_imageTransport, topic2, 1, transportHint) );
+            _imgSub1.reset(new image_transport::SubscriberFilter(*_imageTransport, topic1, 1) );
+            _imgSub2.reset(new image_transport::SubscriberFilter(*_imageTransport, topic2, 1) );
 
             _approxSynchronizer.reset( new message_filters::Synchronizer< ApproxSync >(ApproxSync(10),
                                                                                        *_imgSub1, *_imgSub2) );

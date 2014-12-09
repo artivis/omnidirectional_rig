@@ -65,6 +65,7 @@ void Cart2Sph(const cv::Mat& cart_coor, cv::Mat& sph_coor, int rad_flag )
 
 void MeshGrid(const cv::Mat &X_val, const cv::Mat &Y_val, cv::Mat &X_grid, cv::Mat &Y_grid)
 {
+    // Implementation of the Matlab MeshGrid function
     cv::repeat(X_val,Y_val.total(),1,X_grid);
     cv::repeat(Y_val.reshape(1,1).t(),1,X_val.total(),Y_grid);
 }
@@ -258,9 +259,6 @@ double Deg2Rad(double angle)
     return angle * (mypi/180.0);
 }
 
-
-
-
 void MatInfo(const cv::Mat &mat, const std::string &matname, bool val)
 {
     std::cout<<"\nMat Info : \nName : "<<matname<<"\nisEmpty : "<<mat.empty()<<"\nrows : "<<mat.rows<<" cols : "<<mat.cols<<std::endl;
@@ -303,9 +301,7 @@ std::set<std::string> loadFilesName(const std::string &dir)
     boost::filesystem::path directory(dir);
     if (!boost::filesystem::is_directory(dir))
     {
-        std::cout << "DERE" << std::endl;
         return std::set<std::string>();
-
     }
 
     boost::filesystem::directory_iterator end_iter;
@@ -318,7 +314,6 @@ std::set<std::string> loadFilesName(const std::string &dir)
             result.insert(file.string());
         }
     }
-
     return result;
 }
 
